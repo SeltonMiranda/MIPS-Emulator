@@ -1,6 +1,10 @@
-#include <iostream>
+
+#include "Tokenizer.hpp"
 
 auto main() -> int {
-    printf("Hello World\n");
+    std::ifstream file{"example.txt"};
+    Emulator::Tokenizer tok{std::move(file)};
+    std::vector<std::string> tokens{tok.parse()};
+    tok.printTokens(tokens);
     return 0;
 }

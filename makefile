@@ -1,12 +1,15 @@
-CPPFLAGS = -std=c++23 -Wall -pedantic -g
-EXECUTABLE = emulator
+CPPFLAGS = -std=c++23 -Wall -pedantic -g -I/usr/include/boost
+OBJECTS = main.o Tokenizer.o
 
-.phony: all clean run
+EXECUTABLE = emulator
 
 all: $(EXECUTABLE)
 
-$(EXECUTABLE): main.cpp
-	g++ $< $(CPPFLAGS) -o $@
+$(EXECUTABLE): $(OBJECTS)
+	g++ $(CPPFLAGS) -o $@ $^
+
+%.o: %.cpp 
+	g++ $(CPPFLAGS) -c $< -o $@
 
 run:
 	./$(EXECUTABLE)
