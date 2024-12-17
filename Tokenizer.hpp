@@ -36,7 +36,7 @@ class Tokenizer
         auto parse() -> std::vector<std::string>;
 
         // Only for debug
-        auto printTokens(const std::vector<std::string>& tokens) -> void;
+        auto printSymbols(const std::vector<std::string>& symbols) -> void;
 };
 
 }

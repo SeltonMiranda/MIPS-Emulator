@@ -35,7 +35,7 @@ auto Tokenizer::parse() -> std::vector<std::string> {
 }
 
 
-auto Tokenizer::printTokens(const std::vector<std::string>& symbols) -> void {
+auto Tokenizer::printSymbols(const std::vector<std::string>& symbols) -> void {
     for (const auto& symbol : symbols) {
         std::cout << std::format("\033[33mtoken\033[0m {}\n", symbol);
     }
