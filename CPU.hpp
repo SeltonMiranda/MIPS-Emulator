@@ -2,7 +2,7 @@
 #define __CPU__
 
 #include <iostream>
-#include <memory>
+#include <vector>
 
 namespace Emulator {
 
@@ -20,19 +20,22 @@ class CPU {
     private:
         uint32_t registers[32];
         uint32_t mem_size;
-        std::unique_ptr<uint32_t[]> mem;
+        std::vector<uint8_t> mem;
         uint32_t pc;
 
     public:
         // todo;
-        CPU(size_t mem_size = 1024);
-        auto loadProgram() -> void;
-        auto execute() -> void;
+        CPU();
+        ~CPU() = default;
+        auto loadProgram(const std::vector<uint8_t>& program) -> void;
+        auto execute(uint32_t instruction) -> void;
         auto run() -> void;
         auto readRegister(int index) -> uint32_t;
         auto writeRegister(int index, uint32_t value) -> void;
         auto readMemory(uint32_t address) -> uint32_t;
-        auto writeMemomry(uint32_t address, uint32_t value) -> void;
+        auto readMemoryBlock(uint32_t address) -> uint32_t;
+        auto writeMemory(uint32_t address, uint32_t value) -> void;
+        auto writeMemoryBlock(uint32_t address, uint32_t value) -> void;
 };
 
 }
