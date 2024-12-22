@@ -3,23 +3,14 @@
 
 #include <iostream>
 #include <vector>
+#include <array>
 
 namespace Emulator {
 
-struct Instruction {
-    std::string label;
-    std::string opcode;
-    uint32_t rd;
-    uint32_t rs;
-    uint32_t rt;
-    uint32_t immediate;
-    uint32_t address;
-};
-
 class CPU {
     private:
-        uint32_t registers[32];
-        uint32_t mem_size;
+        std::array<std::uint32_t, 32> registers;
+        std::uint32_t mem_size;
         std::vector<uint8_t> mem;
         uint32_t pc;
 
@@ -27,15 +18,30 @@ class CPU {
         // todo;
         CPU();
         ~CPU() = default;
+
+        // Self-explanatory
         auto loadProgram(const std::vector<uint8_t>& program) -> void;
+
+        
         auto execute(uint32_t instruction) -> void;
-        auto run() -> void;
+
+        // Reads the value from a register
         auto readRegister(int index) -> uint32_t;
+
+        // Writes value into a register
         auto writeRegister(int index, uint32_t value) -> void;
-        auto readMemory(uint32_t address) -> uint32_t;
-        auto readMemoryBlock(uint32_t address) -> uint32_t;
-        auto writeMemory(uint32_t address, uint32_t value) -> void;
-        auto writeMemoryBlock(uint32_t address, uint32_t value) -> void;
+
+        // Reads 1 byte from memory
+        auto readMemory(uint32_t address) -> std::uint8_t;
+
+        // Reads "size" bytes from memory
+        auto readMemoryBlock(std::uint32_t address, std::uint32_t size) -> std::vector<std::uint8_t>;
+
+        // Writes 1 byte to memory
+        auto writeMemory(std::uint32_t address, std::uint8_t value) -> void;
+
+        // Writes "len(value)" bytes to memory
+        auto writeMemoryBlock(std::uint32_t address, std::vector<std::uint8_t> value) -> void;
 };
 
 }

@@ -1,9 +1,14 @@
 
-#include "Tokenizer.hpp"
+#include "Emulator.hpp"
 
 auto main() -> int {
-    std::ifstream file{"example.txt"};
-    Emulator::Tokenizer tok{std::move(file)};
-    std::vector<Emulator::Token*> tokens{tok.parse()};
+    std::string file = "example.txt";
+    auto tokenizer{new Emulator::Tokenizer{file}};
+    auto cpu{new Emulator::CPU()};
+    auto emulator{new Emulator::Emulator(tokenizer, cpu)};
+
+    std::vector<std::uint8_t> code{emulator->assembler()};
+    emulator->printBinaryProgram(code);
+
     return 0;
 }

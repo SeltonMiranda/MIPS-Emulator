@@ -1,5 +1,5 @@
 CPPFLAGS = -std=c++23 -Wall -pedantic -g -I/usr/include/boost
-OBJECTS = main.o Tokenizer.o
+OBJECTS = main.o Tokenizer.o Emulator.o CPU.o
 
 EXECUTABLE = emulator
 
