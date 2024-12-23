@@ -9,6 +9,8 @@ private:
   Tokenizer *tokenizer;
   CPU *cpu;
 
+  auto assembleSysCall(std::vector<std::uint8_t> &program, ResolvedToken *token)
+      -> void;
   auto assembleInstruction(std::vector<uint8_t> &program, ResolvedToken *token)
       -> void;
   auto assemble(const std::vector<ResolvedToken *> &tokens)
@@ -24,5 +26,7 @@ public:
 
   // Debug purposes
   auto printBinaryProgram(const std::vector<std::uint8_t> &program) -> void;
+  auto printContentFromAllRegisters() -> void;
+  auto setContentToAllRegisters() -> void;
 };
 } // namespace Emulator

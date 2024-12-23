@@ -8,8 +8,8 @@ auto main() -> int {
   auto emulator{new Emulator::Emulator(tokenizer, cpu)};
 
   std::vector<std::uint8_t> code{emulator->assembler()};
-  emulator->printBinaryProgram(code);
-  // emulator->run(code);
+  // emulator->printBinaryProgram(code);
+  emulator->run(code);
 
   return 0;
 }
