@@ -41,8 +41,8 @@ auto CPU::readMemoryBlock(std::uint32_t address, std::uint32_t size)
     return std::vector<std::uint8_t>(0);
   }
 
-  std::vector<std::uint8_t> Block(this->mem.begin() + address,
-                                  this->mem.begin() + end + 1);
+  std::vector<std::uint8_t> Block(begin(this->mem) + address,
+                                  begin(this->mem) + end + 1);
   return Block;
 }
 

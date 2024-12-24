@@ -16,15 +16,15 @@ Emulator::~Emulator() {
     delete this->tokenizer;
 }
 
+static const std::unordered_map<std::string, uint8_t> functMap{
+    {"add", 0x20}, {"sub", 0x22},  {"and", 0x24}, {"or", 0x25},
+    {"xor", 0x26}, {"nor", 0x27},  {"sll", 0x00}, {"srl", 0x02},
+    {"sra", 0x03}, {"mult", 0x18}, {"div", 0x1A},
+};
+
 auto Emulator::assembleInstruction(std::vector<uint8_t> &program,
                                    ResolvedToken *token) -> void {
   std::uint32_t bin{0};
-
-  static const std::unordered_map<std::string, uint8_t> functMap{
-      {"add", 0x20}, {"sub", 0x22},  {"and", 0x24}, {"or", 0x25},
-      {"xor", 0x26}, {"nor", 0x27},  {"sll", 0x00}, {"srl", 0x02},
-      {"sra", 0x03}, {"mult", 0x18}, {"div", 0x1A},
-  };
 
   auto it{functMap.find(token->value)};
   uint8_t funct{it->second};
@@ -93,6 +93,12 @@ auto Emulator::assemble(const std::vector<ResolvedToken *> &tokens)
 auto Emulator::assembler() -> std::vector<std::uint8_t> {
   std::vector<Token *> tokens{this->tokenizer->parse()};
   this->tokenizer->resolveTokens(tokens);
+
+  for (size_t i = 0; i < size(tokens); i++) {
+    if (tokens.at(i) != nullptr)
+      delete tokens.at(i);
+  }
+
   return this->assemble(this->tokenizer->getTokens());
 }
 

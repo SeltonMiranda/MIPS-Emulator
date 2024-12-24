@@ -11,5 +11,7 @@ auto main() -> int {
   // emulator->printBinaryProgram(code);
   emulator->run(code);
 
+  delete emulator;
+
   return 0;
 }

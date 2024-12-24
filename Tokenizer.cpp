@@ -19,6 +19,10 @@ Tokenizer::~Tokenizer() {
   if (this->file.is_open()) {
     this->file.close();
   }
+
+  for (const auto &token : this->resolvedTokens) {
+    delete token;
+  }
 }
 
 auto Tokenizer::getTokens() -> const std::vector<ResolvedToken *> & {
