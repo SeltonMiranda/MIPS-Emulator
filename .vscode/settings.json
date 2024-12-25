@@ -57,6 +57,12 @@
         "source_location": "cpp",
         "sstream": "cpp",
         "cinttypes": "cpp",
-        "bitset": "cpp"
+        "bitset": "cpp",
+        "condition_variable": "cpp",
+        "ratio": "cpp",
+        "semaphore": "cpp",
+        "shared_mutex": "cpp",
+        "stop_token": "cpp",
+        "set": "cpp"
     }
 }

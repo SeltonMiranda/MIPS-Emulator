@@ -4,12 +4,10 @@
 #ifndef _TOKENIZER_
 #define _TOKENIZER_
 
-#include <boost/algorithm/string.hpp>
-#include <format>
-#include <fstream>
-#include <iostream>
+#include "Config.hpp"
 
 namespace Emulator {
+
 enum class Type { INSTRUCTION, ARG, SYS_CALL };
 
 struct Token // (Unresolved token)
@@ -22,14 +20,13 @@ struct Token // (Unresolved token)
 };
 
 struct ResolvedToken {
-  Type type;             // Type of the token (INSTRUCTION, LABEL, LITERAL)
-  size_t line;           // Line where it was found
-  std::string value;     // mnemonic or label or literal
-  std::uint64_t address; // address
-  std::vector<std::uint64_t> args; // registers (rd, rs, rt)
+  Type type;         // Type of the token (INSTRUCTION, LABEL, LITERAL)
+  size_t line;       // Line where it was found
+  std::string value; // mnemonic or label or literal
+  u64 address;       // address
+  VecU64 args;       // registers (rd, rs, rt)
 
-  ResolvedToken(Type type, size_t line, const std::string &value,
-                std::uint64_t address);
+  ResolvedToken(Type type, size_t line, const std::string &value, u64 address);
 };
 
 class Tokenizer {
@@ -42,11 +39,10 @@ private:
                  size_t lineNumber) -> void;
 
   // Parses a register
-  auto parseRegister(const std::string &arg) -> std::uint64_t;
+  auto parseRegister(const std::string &arg) -> u64;
 
   // Translantes an register to uint64_t
-  auto translateArgs(const std::vector<std::string> &args)
-      -> std::vector<uint64_t>;
+  auto translateArgs(const std::vector<std::string> &args) -> VecU64;
 
 public:
   Tokenizer(std::ifstream &&file);

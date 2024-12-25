@@ -1,17 +1,20 @@
 
-#include "Emulator.hpp"
+#include "Engine.hpp"
 
 auto main() -> int {
   std::string file = "example.txt";
-  auto tokenizer{new Emulator::Tokenizer{file}};
-  auto cpu{new Emulator::CPU()};
-  auto emulator{new Emulator::Emulator(tokenizer, cpu)};
+  try {
+    auto tokenizer{new Emulator::Tokenizer{file}};
+    auto cpu{new Emulator::CPU()};
+    auto emulator{new Emulator::Engine(tokenizer, cpu)};
 
-  std::vector<std::uint8_t> code{emulator->assembler()};
-  // emulator->printBinaryProgram(code);
-  emulator->run(code);
-
-  delete emulator;
+    VecU8 code{emulator->assembler()};
+    // emulator->printTokens();
+    emulator->run(code);
+    delete emulator;
+  } catch (std::exception &e) {
+    std::cout << e.what();
+  }
 
   return 0;
 }

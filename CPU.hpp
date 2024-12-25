@@ -1,32 +1,30 @@
 #ifndef __CPU__
 #define __CPU__
 
-#include <array>
-#include <iostream>
-#include <vector>
+#include "Config.hpp"
 
 namespace Emulator {
 
 class CPU {
 private:
-  std::array<std::uint32_t, 32> registers;
-  std::uint32_t mem_size;
-  std::vector<uint8_t> mem;
-  uint32_t pc;
-  bool ebreak;
-
-  struct Instruction { // intermediate
-    std::uint32_t rd;
-    std::uint32_t rs;
-    std::uint32_t rt;
-    std::uint32_t imm;
-    std::uint32_t shamt;
-    std::uint32_t funct;
-    std::uint32_t address;
+  struct Instruction { // intermediate (may be a union? Have to think about it)
+    u64 address;
+    u32 opcode;
+    u32 rd;
+    u32 rs;
+    u32 rt;
+    u32 shamt;
+    u32 funct;
+    s16 imm;
   };
 
+  VecU8 mem;
+  std::array<s32, 32> registers;
+  u32 max_size;
+  u32 pc;
+  bool halt;
+
 public:
-  // todo;
   CPU();
   ~CPU() = default;
 
@@ -34,35 +32,38 @@ public:
 
   auto hasHalted() -> bool;
 
+  constexpr inline auto immExt(s16 imm) -> s32;
+  constexpr inline auto zeroExt(s16 imm) -> u32;
+
   // Self-explanatory
-  auto loadProgram(const std::vector<uint8_t> &program) -> void;
+  auto loadProgram(const VecU8 &program) -> void;
 
-  auto parseR(std::uint32_t instruction) -> Instruction;
+  auto parseImm(u32 instruction) -> Instruction;
+  auto parseR(u32 instruction) -> Instruction;
 
+  auto executeImm(Instruction i) -> void;
   auto executeR(Instruction i) -> void;
 
   // Executes an instruction
-  auto execute(uint32_t instruction) -> void;
+  auto execute(u32 instruction) -> void;
 
   // Reads the value from a register
-  auto readRegister(std::uint32_t index) -> uint32_t;
+  auto readRegister(u32 index) -> s32;
 
   // Writes value into a register
-  auto writeRegister(std::uint32_t index, uint32_t value) -> void;
+  auto writeRegister(u32 index, s32 value) -> void;
 
   // Reads 1 byte from memory
-  auto readMemory(uint32_t address) -> std::uint8_t;
+  auto readMemory(u64 address) -> u8;
 
   // Reads "size" bytes from memory
-  auto readMemoryBlock(std::uint32_t address, std::uint32_t size)
-      -> std::vector<std::uint8_t>;
+  auto readMemoryBlock(u64 address, u32 size) -> VecU8;
 
   // Writes 1 byte to memory
-  auto writeMemory(std::uint32_t address, std::uint8_t value) -> void;
+  auto writeMemory(u64 address, u8 value) -> void;
 
   // Writes "len(value)" bytes to memory
-  auto writeMemoryBlock(std::uint32_t address,
-                        const std::vector<std::uint8_t> &value) -> void;
+  auto writeMemoryBlock(u64 address, const VecU8 &value) -> void;
 };
 
 } // namespace Emulator

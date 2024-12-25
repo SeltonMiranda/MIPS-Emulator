@@ -6,26 +6,25 @@
 namespace Emulator {
 
 CPU::CPU() {
-  this->mem_size = std::numeric_limits<uint32_t>::max();
+  this->max_size = std::numeric_limits<uint32_t>::max();
   this->pc = 0;
   this->registers.fill(0);
-  this->ebreak = false;
+  this->halt = false;
 }
 
-auto CPU::hasHalted() -> bool { return this->ebreak; }
+auto CPU::hasHalted() -> bool { return this->halt; }
 
-auto CPU::loadProgram(const std::vector<std::uint8_t> &program) -> void {
-  if (program.size() > this->mem_size) {
+auto CPU::loadProgram(const VecU8 &program) -> void {
+  if (size(program) > this->max_size - 1) {
     std::cout << std::format("Program is too large to fit in memory\n");
     return;
   }
-
-  this->mem.resize(program.size());
+  this->mem = program;
   this->writeMemoryBlock(0, program);
 }
 
-auto CPU::readMemory(uint32_t address) -> std::uint8_t {
-  if (address > this->mem_size) {
+auto CPU::readMemory(u64 address) -> u8 {
+  if (address > this->max_size) {
     std::cout << std::format("Out of bounds for memory\n");
     return 0;
   }
@@ -33,41 +32,30 @@ auto CPU::readMemory(uint32_t address) -> std::uint8_t {
   return this->mem[address];
 }
 
-auto CPU::readMemoryBlock(std::uint32_t address, std::uint32_t size)
-    -> std::vector<std::uint8_t> {
-  uint32_t end{address + size - 1};
-  if (end > this->mem_size) {
+auto CPU::readMemoryBlock(u64 address, u32 size) -> VecU8 {
+  u64 end{address + size - 1};
+  if (end > this->max_size - 1) {
     std::cout << std::format("Out of bounds for memory\n");
-    return std::vector<std::uint8_t>(0);
+    return VecU8(0);
   }
 
-  std::vector<std::uint8_t> Block(begin(this->mem) + address,
-                                  begin(this->mem) + end + 1);
+  VecU8 Block(begin(this->mem) + address, begin(this->mem) + end + 1);
   return Block;
 }
 
-auto CPU::writeMemory(std::uint32_t address, std::uint8_t value) -> void {
-  if (address > this->mem_size) {
-    std::cout << std::format("Out of bounds\n");
-    return;
-  }
-
-  if (address > this->mem.size())
-    this->mem.resize(address + 1);
+auto CPU::writeMemory(u64 address, u8 value) -> void {
+  if (address > this->max_size - 1)
+    throw std::runtime_error(
+        "ERROR! Address is bigger than 2^32 bits address space\n");
 
   this->mem[address] = value;
 }
 
-auto CPU::writeMemoryBlock(std::uint32_t address,
-                           const std::vector<std::uint8_t> &value) -> void {
-  uint32_t end{address + static_cast<std::uint32_t>(value.size()) - 1};
-  if (end > this->mem_size) {
-    std::cout << std::format("Out of bounds\n");
-    return;
-  }
-
-  if (end >= this->mem.size())
-    this->mem.resize(end + 1);
+auto CPU::writeMemoryBlock(u64 address, const VecU8 &value) -> void {
+  u64 end{address + static_cast<u32>(value.size()) - 1};
+  if (end > this->max_size - 1)
+    throw std::runtime_error(
+        "ERROR! Address is bigger than 2^32 bits address space\n");
 
   for (const auto &content : value) {
     this->mem[address] = content;
@@ -75,41 +63,81 @@ auto CPU::writeMemoryBlock(std::uint32_t address,
   }
 }
 
-auto CPU::writeRegister(std::uint32_t index, std::uint32_t value) -> void {
+auto CPU::writeRegister(u32 index, s32 value) -> void {
   if (index == 0)
     return;
 
   this->registers[index] = value;
 }
 
-auto CPU::readRegister(std::uint32_t index) -> std::uint32_t {
+auto CPU::readRegister(u32 index) -> s32 {
+  if (index == 0) {
+    return 0;
+  }
+
   return this->registers[index];
 }
 
 auto CPU::nextInstruction() -> void {
   auto value{this->readMemoryBlock(this->pc, 4)};
 
-  std::uint32_t instruction{
-      std::uint32_t((value[0] << 0)) | std::uint32_t((value[1] << 8)) |
-      std::uint32_t((value[2] << 16)) | std::uint32_t((value[3] << 24))};
+  u32 instruction{u32((value[0] << 0)) | u32((value[1] << 8)) |
+                  u32((value[2] << 16)) | u32((value[3] << 24))};
   this->execute(instruction);
 }
 
-auto CPU::parseR(std::uint32_t instruction) -> Instruction {
+auto CPU::parseImm(u32 instruction) -> Instruction {
+  Instruction i;
+  i.opcode = (instruction >> 26) & 0x3F;
+  i.rt = (instruction >> 16) & 0x1F;
+  i.rs = (instruction >> 21) & 0x1F;
+  i.imm = (instruction >> 0) & 0xFFFF;
+  return i;
+}
+
+auto CPU::parseR(u32 instruction) -> Instruction {
   Instruction i;
   i.rd = (instruction >> 11) & 0x1F;
   i.rt = (instruction >> 16) & 0x1F;
   i.rs = (instruction >> 21) & 0x1F;
   i.shamt = (instruction >> 6) & 0x1F;
   i.funct = (instruction >> 0) & 0x3F;
-
   return i;
 }
 
+constexpr inline auto CPU::immExt(s16 imm) -> s32 {
+  return static_cast<s32>(imm);
+}
+
+constexpr inline auto CPU::zeroExt(s16 imm) -> u32 {
+  return static_cast<u32>(std::abs(imm));
+}
+
+auto CPU::executeImm(Instruction i) -> void {
+  s32 rsContent{this->readRegister(i.rs)};
+  s32 valueToWrite;
+
+  switch (i.opcode) {
+  case 0x08: // addi
+    valueToWrite = rsContent + this->immExt(i.imm);
+    break;
+
+  case 0x0C: // andi
+    valueToWrite = rsContent & this->zeroExt(i.imm);
+    break;
+
+  case 0x0D: // ori
+    valueToWrite = rsContent | this->zeroExt(i.imm);
+    break;
+  }
+  this->writeRegister(i.rt, valueToWrite);
+  this->pc += 4;
+}
+
 auto CPU::executeR(Instruction i) -> void {
-  std::uint32_t rsContent{this->readRegister(i.rs)};
-  std::uint32_t rtContent{this->readRegister(i.rt)};
-  std::uint32_t valueToWrite;
+  s32 rsContent{this->readRegister(i.rs)};
+  s32 rtContent{this->readRegister(i.rt)};
+  s32 valueToWrite;
 
   switch (i.funct) {
 
@@ -147,22 +175,28 @@ auto CPU::executeR(Instruction i) -> void {
     break;
 
   case 0x0D: // ebreak
-    this->ebreak = true;
+    this->halt = true;
     break;
   }
-
   this->writeRegister(i.rd, valueToWrite);
   this->pc += 4;
 }
 
-auto CPU::execute(std::uint32_t instruction) -> void {
-  uint32_t opcode{(instruction >> 26) & 0x3F};
-
+auto CPU::execute(u32 instruction) -> void {
+  u32 opcode{(instruction >> 26) & 0x3F};
+  Instruction i;
   switch (opcode) {
-  case 0x0: {
-    Instruction i{this->parseR(instruction)};
+  case 0x00:
+    i = this->parseR(instruction);
     this->executeR(i);
-  } break;
+    break;
+
+  case 0x08:
+  case 0x0C:
+  case 0x0D:
+    i = this->parseImm(instruction);
+    this->executeImm(i);
+    break;
 
   default:
     std::cout << std::bitset<32>(instruction) << " ";
