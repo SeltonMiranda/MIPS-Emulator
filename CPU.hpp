@@ -18,7 +18,7 @@ private:
     s16 imm;
   };
 
-  std::array<u8, std::numeric_limits<uint32_t>::max()> mem;
+  VecU8 mem;
   std::array<s32, 32> registers;
   u32 max_size;
   u32 pc;
@@ -28,20 +28,31 @@ public:
   CPU();
   ~CPU() = default;
 
+  // Reads next instruction and execute it
   auto nextInstruction() -> void;
 
+  // Checks if program finished
   auto hasHalted() -> bool;
 
+  // Extends immediate with signal
   constexpr inline auto immExt(s16 imm) -> s32;
+
+  // Extends immediate without signal
   constexpr inline auto zeroExt(s16 imm) -> u32;
 
   // Self-explanatory
   auto loadProgram(const VecU8 &program) -> void;
-
+ 
+  // Parses I-type instructions
   auto parseImm(u32 instruction) -> Instruction;
+
+  // Parses R-type instructions
   auto parseR(u32 instruction) -> Instruction;
 
+  // Executes an I-type instruction
   auto executeImm(Instruction i) -> void;
+
+  // Executes an R-type instruction
   auto executeR(Instruction i) -> void;
 
   // Executes an instruction
@@ -66,6 +77,6 @@ public:
   auto writeMemoryBlock(u64 address, const VecU8 &value) -> void;
 };
 
-} // namespace Emulator
+}
 
 #endif // __CPU__

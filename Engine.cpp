@@ -4,18 +4,11 @@
 #include <random>
 #include <set>
 
-// Immediate instruction use different opcodes for each one, so I need to
-// have another unordered_map<std::string, u8>
-
-// Need to cope with sll and srl instructions, they're R-type and use shamt
-// field, which I'm not dealing with it yet
-
 namespace Emulator {
 
 static const std::unordered_map<std::string, u8> functMap{
     {"add", 0x20}, {"sub", 0x22},  {"and", 0x24}, {"or", 0x25},
-    {"xor", 0x26}, {"nor", 0x27},  {"sll", 0x00}, {"srl", 0x02},
-    {"sra", 0x03}, {"mult", 0x18}, {"div", 0x1A},
+    {"nor", 0x27},  {"sll", 0x00}, {"srl", 0x02}, {"slt", 0x2A},
 };
 
 static const std::unordered_map<std::string, u8> opcodeMap{
@@ -32,8 +25,7 @@ Engine::~Engine() {
     delete this->tokenizer;
 }
 
-auto Engine::assembleInstruction(VecU8 &program, ResolvedToken *token,
-                                 u64 address) -> void {
+auto Engine::assembleInstruction(VecU8 &program, ResolvedToken *token, u64 address) -> void {
   u32 bin{0};
 
   if (functMap.find(token->value) != end(functMap)) {
@@ -178,4 +170,4 @@ auto Engine::setContentToAllRegisters() -> void {
 
 auto Engine::printTokens() -> void { this->tokenizer->printTokensResolved(); }
 
-} // namespace Emulator
+}

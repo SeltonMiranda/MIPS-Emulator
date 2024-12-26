@@ -141,7 +141,6 @@ auto Tokenizer::resolveTokens(const std::vector<Token *> &tokens) -> void {
       std::array<std::string, 3> args;
       size_t j{0};
       while (i < size(tokens) && tokens[i]->type == Type::ARG) {
-        std::cout << "arg " << tokens[i]->value << "\n";
         args.at(j) = tokens[i]->value;
         j++;
         i++;

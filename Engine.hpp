@@ -1,3 +1,9 @@
+// TODO
+// Branch instructions
+// Jump instructions
+// Store and Load instructions
+
+
 #pragma once
 
 #include "CPU.hpp"
@@ -10,10 +16,8 @@ private:
   Tokenizer *tokenizer;
   CPU *cpu;
 
-  auto assembleSysCall(VecU8 &program, ResolvedToken *token, u64 address)
-      -> void;
-  auto assembleInstruction(VecU8 &program, ResolvedToken *token, u64 address)
-      -> void;
+  auto assembleSysCall(VecU8 &program, ResolvedToken *token, u64 address) -> void;
+  auto assembleInstruction(VecU8 &program, ResolvedToken *token, u64 address) -> void;
   auto assemble(const std::vector<ResolvedToken *> &tokens) -> VecU8;
 
 public:
@@ -31,4 +35,4 @@ public:
   auto setContentToAllRegisters() -> void;
 };
 
-} // namespace Emulator
+}

@@ -6,12 +6,15 @@ namespace Emulator {
 
 CPU::CPU() {
   this->max_size = std::numeric_limits<uint32_t>::max();
+  this->mem.resize(this->max_size);
   this->pc = 0;
   this->registers.fill(0);
   this->halt = false;
 }
 
-auto CPU::hasHalted() -> bool { return this->halt; }
+auto CPU::hasHalted() -> bool { 
+  return this->halt;
+}
 
 auto CPU::loadProgram(const VecU8 &program) -> void {
   if (size(program) > this->max_size - 1) {
@@ -19,7 +22,7 @@ auto CPU::loadProgram(const VecU8 &program) -> void {
     return;
   }
 
-  std::copy(program.begin(), program.end(), this->mem.begin());
+  this->writeMemoryBlock(0, program);
 }
 
 auto CPU::readMemory(u64 address) -> u8 {
@@ -70,10 +73,6 @@ auto CPU::writeRegister(u32 index, s32 value) -> void {
 }
 
 auto CPU::readRegister(u32 index) -> s32 {
-  if (index == 0) {
-    return 0;
-  }
-
   return this->registers[index];
 }
 
@@ -87,10 +86,10 @@ auto CPU::nextInstruction() -> void {
 
 auto CPU::parseImm(u32 instruction) -> Instruction {
   Instruction i;
-  i.opcode = (instruction >> 26) & 0x3F;
-  i.rt = (instruction >> 16) & 0x1F;
-  i.rs = (instruction >> 21) & 0x1F;
-  i.imm = (instruction >> 0) & 0xFFFF;
+  i.opcode  =  (instruction >> 26) & 0x3F;
+  i.rt      =  (instruction >> 16) & 0x1F;
+  i.rs      =  (instruction >> 21) & 0x1F;
+  i.imm     =  (instruction >>  0) & 0xFFFF;
   return i;
 }
 
@@ -170,7 +169,10 @@ auto CPU::executeR(Instruction i) -> void {
 
   case 0x27: // nor
     valueToWrite = ~(rsContent | rtContent);
+    break;
 
+  case 0x2A: // slt
+    valueToWrite =  (rsContent < rtContent) ? 1 : 0;
     break;
 
   case 0x0D: // ebreak
