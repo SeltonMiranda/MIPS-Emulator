@@ -20,11 +20,11 @@ struct Token // (Unresolved token)
 };
 
 struct ResolvedToken {
-  Type type;         // Type of the token (INSTRUCTION, LABEL, LITERAL)
-  size_t line;       // Line where it was found
-  std::string value; // mnemonic or label or literal
-  u64 address;       // address
-  VecU64 args;       // registers (rd, rs, rt)
+  Type type;               // Type of the token (INSTRUCTION, LABEL, LITERAL)
+  size_t line;             // Line where it was found
+  std::string value;       // mnemonic or label or literal
+  u64 address;             // address
+  std::array<u64, 3> args; // registers (rd, rs, rt)
 
   ResolvedToken(Type type, size_t line, const std::string &value, u64 address);
 };
@@ -34,15 +34,15 @@ private:
   std::ifstream file;                          // input file stream
   std::vector<ResolvedToken *> resolvedTokens; // self-explanatory
 
-  // Parses line
-  auto parseLine(std::vector<Token *> &tokens, std::string &line,
-                 size_t lineNumber) -> void;
+  // Translates the argument
+  auto translate(const std::string &arg) -> u64;
 
-  // Parses a register
-  auto parseRegister(const std::string &arg) -> u64;
+  // Parses the register's number
+  auto parseRegister(const char *arg) -> u64;
 
-  // Translantes an register to uint64_t
-  auto translateArgs(const std::vector<std::string> &args) -> VecU64;
+  // Translantes arguments into an array of u64
+  auto translateArgs(const std::array<std::string, 3> &args)
+      -> std::array<u64, 3>;
 
 public:
   Tokenizer(std::ifstream &&file);

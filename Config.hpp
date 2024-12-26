@@ -4,6 +4,7 @@
 #include <format>
 #include <fstream>
 #include <iostream>
+#include <limits>
 #include <vector>
 
 using VecU64 = std::vector<std::uint64_t>;

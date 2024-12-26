@@ -37,26 +37,36 @@ auto Engine::assembleInstruction(VecU8 &program, ResolvedToken *token,
   u32 bin{0};
 
   if (functMap.find(token->value) != end(functMap)) {
+    u8 rs, rt, rd;
+    u8 shamt{0};
+
     auto value{functMap.find(token->value)};
-    // Process instructions
     u8 funct{value->second};
-    u8 rd{static_cast<u8>(token->args.at(0))};
-    u8 rs{static_cast<u8>(token->args.at(1))};
-    u8 rt{static_cast<u8>(token->args.at(2))};
+
+    rd = static_cast<u8>(token->args.at(0));
+    if (token->value == "sll" || token->value == "srl") {
+      rt = static_cast<u8>(token->args.at(1));
+      shamt = static_cast<u8>(token->args.at(2));
+    } else {
+      rs = static_cast<u8>(token->args.at(1));
+      rt = static_cast<u8>(token->args.at(2));
+    }
 
     // Builds the 32 bits binary
-    bin |= (0 << 26);         // opcode (Only has R-format instrution for now)
-    bin |= (rs & 0x1F) << 21; // rs
-    bin |= (rt & 0x1F) << 16; // rt
-    bin |= (rd & 0x1F) << 11; // rd
-    bin |= (rt & 0x1F) << 6;  // shamt
-    bin |= (funct & 0x3F);    // funct
+    bin |= (rs & 0x1F) << 21;   // rs
+    bin |= (rt & 0x1F) << 16;   // rt
+    bin |= (rd & 0x1F) << 11;   // rd
+    bin |= (shamt & 0x1F) << 6; // shamt
+    bin |= (funct & 0x3F) << 0; // funct
   } else if (opcodeMap.find(token->value) != end(opcodeMap)) {
     auto value{opcodeMap.find(token->value)};
-    u8 opcode{value->second};
-    u8 rt{static_cast<u8>(token->args.at(0))};
-    u8 rs{static_cast<u8>(token->args.at(1))};
-    s16 imm{static_cast<s16>(token->args.at(2))};
+    u8 opcode, rt, rs;
+    s16 imm;
+
+    opcode = value->second;
+    rt = static_cast<u8>(token->args.at(0));
+    rs = static_cast<u8>(token->args.at(1));
+    imm = static_cast<s16>(token->args.at(2));
 
     bin |= (opcode << 26);
     bin |= (rs & 0x1F) << 21;
@@ -94,7 +104,7 @@ auto Engine::assemble(const std::vector<ResolvedToken *> &tokens) -> VecU8 {
   u64 length{0};
   u64 address{0};
 
-  // Maybe use std::array should be better
+  // Pre-calculate program length to avoid realloc operations in vector
   for (size_t i = 0; i < size(tokens); i++) {
     if (tokens.at(i)->type == Type::INSTRUCTION ||
         tokens.at(i)->type == Type::SYS_CALL) {
@@ -114,7 +124,6 @@ auto Engine::assemble(const std::vector<ResolvedToken *> &tokens) -> VecU8 {
       std::cout << std::format("Unknown token type\n");
     }
   }
-
   return program;
 }
 
@@ -130,13 +139,16 @@ auto Engine::assembler() -> VecU8 {
   return this->assemble(this->tokenizer->getTokens());
 }
 
-auto Engine::run(const std::vector<uint8_t> &code) -> void {
+auto Engine::run(const VecU8 &code) -> void {
   this->cpu->loadProgram(code);
-  this->printContentFromAllRegisters();
+
+  this->printContentFromAllRegisters(); // Debug
+
   while (!this->cpu->hasHalted())
     this->cpu->nextInstruction();
-  std::cout << "--------------------------------------\n";
-  this->printContentFromAllRegisters();
+
+  std::cout << "--------------------------------------\n"; // Debug
+  this->printContentFromAllRegisters();                    // Debug
 }
 
 // Debug

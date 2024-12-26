@@ -1,7 +1,6 @@
 #include "CPU.hpp"
 
 #include <bitset>
-#include <limits>
 
 namespace Emulator {
 
@@ -19,8 +18,8 @@ auto CPU::loadProgram(const VecU8 &program) -> void {
     std::cout << std::format("Program is too large to fit in memory\n");
     return;
   }
-  this->mem = program;
-  this->writeMemoryBlock(0, program);
+
+  std::copy(program.begin(), program.end(), this->mem.begin());
 }
 
 auto CPU::readMemory(u64 address) -> u8 {
