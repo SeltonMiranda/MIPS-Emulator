@@ -6,12 +6,12 @@
 
 namespace Emulator {
 
-static const std::unordered_map<std::string, u8> functMap{
+static const std::unordered_map<std::string, u8> functMap {
     {"add", 0x20}, {"sub", 0x22},  {"and", 0x24}, {"or", 0x25},
     {"nor", 0x27},  {"sll", 0x00}, {"srl", 0x02}, {"slt", 0x2A},
 };
 
-static const std::unordered_map<std::string, u8> opcodeMap{
+static const std::unordered_map<std::string, u8> opcodeMap {
     {"addi", 0x08},
     {"andi", 0x0C},
     {"ori" , 0x0D},
@@ -19,6 +19,11 @@ static const std::unordered_map<std::string, u8> opcodeMap{
     {"bne" , 0x05},
     {"blt" , 0x06}, // Pseudo
     {"bge" , 0x07}, // Pseudo
+};
+
+static const std::unordered_map<std::string, u8> jumpMap {
+  {"j"  , 0x02},
+  {"jal", 0x03},
 };
 
 Engine::~Engine() {
@@ -70,6 +75,13 @@ auto Engine::assembleInstruction(VecU8 &program, ResolvedToken *token, u64 addre
     } else {
       bin |= (imm    & 0xFFFF);
     }
+
+  } else if (jumpMap.contains(token->value)) {
+    u8 opcode = jumpMap.at(token->value);
+    u32 address = static_cast<u32>(token->args.at(0));
+
+    bin |= (opcode & 0x3F) << 26;
+    bin |= (address & 0x3FFFFFF);
 
   } else {
     std::string err{std::format("Mnemonic {} in line {} not found\n", token->value, token->line)};

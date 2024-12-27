@@ -24,7 +24,7 @@ struct ResolvedToken {
   size_t line;             // Line where it was found
   std::string value;       // mnemonic or label or literal
   u64 address;             // address
-  std::array<u64, 3> args; // registers (rd, rs, rt)
+  VecU64 args; // registers (rd, rs, rt)
 
   ResolvedToken(Type type, size_t line, const std::string &value, u64 address);
 };
@@ -42,8 +42,7 @@ private:
   auto parseRegister(const char *arg) -> u64;
 
   // Translantes arguments into an array of u64
-  auto translateArgs(const std::array<std::string, 3> &args)
-      -> std::array<u64, 3>;
+  auto translateArgs(const VecString& args) -> VecU64;
 
 
   auto isLabel(const std::string& label) -> bool; 

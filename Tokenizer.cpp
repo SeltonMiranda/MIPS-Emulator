@@ -121,17 +121,15 @@ auto Tokenizer::translate(const std::string &arg) -> u64 {
   return this->parseRegister(arg.data());
 }
 
-auto Tokenizer::translateArgs(const std::array<std::string, 3> &args) -> std::array<u64, 3> {
-  if (size(args) < 3) {
+auto Tokenizer::translateArgs(const VecString& args) -> VecU64 {
+  if (size(args) < 1 || size(args) >= 4) {
     throw std::invalid_argument(
         std::format("ERROR! Not enough arguments in line"));
   }
 
-  std::array<u64, 3> translatedArgs;
-  u8 i = 0;
+  VecU64 translatedArgs;
   for (const auto &arg : args) {
-    translatedArgs.at(i) = this->translate(arg);
-    i++;
+    translatedArgs.push_back(this->translate(arg));
   }
 
   return translatedArgs;
@@ -139,7 +137,7 @@ auto Tokenizer::translateArgs(const std::array<std::string, 3> &args) -> std::ar
 
 auto Tokenizer::resolveTokens(const std::vector<Token *> &tokens) -> void {
   u64 address = 0;
-  std::unordered_map<u64, std::array<std::string, 3>> arguments;
+  std::unordered_map<u64, VecString> arguments;
 
   for (size_t i = 0; i < size(tokens); i++) {
     switch (tokens[i]->type) {
@@ -153,14 +151,15 @@ auto Tokenizer::resolveTokens(const std::vector<Token *> &tokens) -> void {
 
       // insert arguments into a vector to facilitate it
       i++;
-      std::array<std::string, 3> args;
-      size_t j{0};
+      VecString args;
       while (i < size(tokens) && tokens[i]->type == Type::ARG) {
-        args.at(j) = tokens[i]->value;
-        j++;
+        if (!tokens[i]->value.empty()) {
+          args.push_back(tokens[i]->value);
+        }
         i++;
       }
       i--;
+
       arguments[address] = args;
       this->resolvedTokens.push_back(_resolvedToken);
       address += 4;

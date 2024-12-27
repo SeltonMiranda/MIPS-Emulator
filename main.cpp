@@ -11,7 +11,7 @@ auto main() -> int {
     emulator->run(code);
     delete emulator;
   } catch (std::exception &e) {
-    std::cout << std::format("invalid\n");
+    std::cout << e.what();
   }
   return 0;
 }

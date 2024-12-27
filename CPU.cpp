@@ -103,12 +103,32 @@ auto CPU::parseR(u32 instruction) -> Instruction {
   return i;
 }
 
+auto CPU::parseJ(u32 instruction) -> Instruction {
+  Instruction i;
+  i.opcode = (instruction >> 26) & 0x3F;
+  i.address = (instruction & 0x3FFFFFF);
+  return i;
+}
+
 constexpr inline auto CPU::immExt(s16 imm) -> s32 {
   return static_cast<s32>(imm);
 }
 
 constexpr inline auto CPU::zeroExt(s16 imm) -> u32 {
   return static_cast<u32>(std::abs(imm));
+}
+
+auto CPU::executeJ(Instruction i) -> void {
+  switch (i.opcode) {
+    case 0x02:
+      this->pc = u32(i.address);
+      break;
+
+    case 0x03:
+      this->registers[31] = this->pc + 8;
+      this->pc = u32(i.address);
+      break;
+  }
 }
 
 auto CPU::executeImm(Instruction i) -> void {
@@ -233,6 +253,12 @@ auto CPU::execute(u32 instruction) -> void {
   case 0x0D: // ori
     i = this->parseImm(instruction);
     this->executeImm(i);
+    break;
+
+  case 0x02:
+  case 0x03:
+    i = this->parseJ(instruction);
+    this->executeJ(i);
     break;
 
   default:

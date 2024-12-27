@@ -41,13 +41,17 @@ public:
   constexpr inline auto zeroExt(s16 imm) -> u32;
 
   // Self-explanatory
-  auto loadProgram(const VecU8 &program) -> void;
+  auto loadProgram(const VecU8& program) -> void;
+
+  auto parseJ(u32 instruction) -> Instruction;
  
   // Parses I-type instructions
   auto parseImm(u32 instruction) -> Instruction;
 
   // Parses R-type instructions
   auto parseR(u32 instruction) -> Instruction;
+
+  auto executeJ(Instruction i) -> void;
 
   // Executes an I-type instruction
   auto executeImm(Instruction i) -> void;
