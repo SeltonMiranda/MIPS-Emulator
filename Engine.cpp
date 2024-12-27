@@ -16,6 +16,9 @@ static const std::unordered_map<std::string, u8> opcodeMap{
     {"andi", 0x0C},
     {"ori" , 0x0D},
     {"beq" , 0x04},
+    {"bne" , 0x05},
+    {"blt" , 0x06}, // Pseudo
+    {"bge" , 0x07}, // Pseudo
 };
 
 Engine::~Engine() {
@@ -61,7 +64,7 @@ auto Engine::assembleInstruction(VecU8 &program, ResolvedToken *token, u64 addre
     bin |= (opcode &   0x3F) << 26;
     bin |= (rs     &   0x1F) << 21;
     bin |= (rt     &   0x1F) << 16;
-    if (token->value == "beq") {
+    if (token->value == "beq" || token->value == "bne" || token->value == "bge" || token->value == "blt") {
       s32 offset = (imm - address) >> 2;
       bin |= (offset & 0xFFFF);
     } else {

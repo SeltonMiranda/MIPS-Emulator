@@ -117,27 +117,49 @@ auto CPU::executeImm(Instruction i) -> void {
   s32 valueToWrite;
 
   switch (i.opcode) {
-  case 0x08: // addi
-    valueToWrite = rsContent + this->immExt(i.imm);
-    this->writeRegister(i.rt, valueToWrite);
-    break;
+    case 0x04: // beq
+      if (rsContent == rtContent) {
+        s32 offset = this->immExt(i.imm) << 2 ;
+        this->pc = u32(s32(this->pc) + offset) - 4; 
+      }
+      break;
+    
+    case 0x05:
+      if (rsContent != rtContent) {
+        s32 offset = this->immExt(i.imm) << 2 ;
+        this->pc = u32(s32(this->pc) + offset) - 4;
+      }
+      break;
 
-  case 0x0C: // andi
-    valueToWrite = rsContent & this->zeroExt(i.imm);
-    this->writeRegister(i.rt, valueToWrite);
-    break;
+    case 0x06:
+      if (rtContent < rsContent) {
+        s32 offset = this->immExt(i.imm) << 2 ;
+        this->pc = u32(s32(this->pc) + offset) - 4;
+      }
+      break;
 
-  case 0x0D: // ori
-    valueToWrite = rsContent | this->zeroExt(i.imm);
-    this->writeRegister(i.rt, valueToWrite);
-    break;
+    case 0x07:
+      if (rtContent >= rsContent) {
+        s32 offset = this->immExt(i.imm) << 2 ;
+        this->pc = u32(s32(this->pc) + offset) - 4;
+      }
+      break;
 
-  case 0x04: // beq
-    if (rsContent == rtContent) {
-      s32 offset = this->immExt(i.imm) << 2 ;
-      this->pc = u32(s32(this->pc) + offset) - 4; 
-    }
-    break;
+    case 0x08: // addi
+      valueToWrite = rsContent + this->immExt(i.imm);
+      this->writeRegister(i.rt, valueToWrite);
+      break;
+
+    case 0x0C: // andi
+      valueToWrite = rsContent & this->zeroExt(i.imm);
+      this->writeRegister(i.rt, valueToWrite);
+      break;
+
+    case 0x0D: // ori
+      valueToWrite = rsContent | this->zeroExt(i.imm);
+      this->writeRegister(i.rt, valueToWrite);
+      break;
+
   }
   this->pc += 4;
 }
@@ -202,10 +224,13 @@ auto CPU::execute(u32 instruction) -> void {
     this->executeR(i);
     break;
 
-  case 0x08:
-  case 0x0C:
-  case 0x0D:
-  case 0x04:
+  case 0x04: // beq
+  case 0x05: // bne
+  case 0x06: // blt (Pseudo)
+  case 0x07: // bge (Pseudo)
+  case 0x08: // addi
+  case 0x0C: // andi
+  case 0x0D: // ori
     i = this->parseImm(instruction);
     this->executeImm(i);
     break;
