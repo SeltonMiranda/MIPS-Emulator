@@ -8,7 +8,7 @@
 
 namespace Emulator {
 
-enum class Type { INSTRUCTION, ARG, SYS_CALL };
+enum class Type { INSTRUCTION, ARG, SYS_CALL, LABEL };
 
 struct Token // (Unresolved token)
 {
@@ -33,6 +33,7 @@ class Tokenizer {
 private:
   std::ifstream file;                          // input file stream
   std::vector<ResolvedToken *> resolvedTokens; // self-explanatory
+  std::unordered_map<std::string, u64> labelsToAddress;
 
   // Translates the argument
   auto translate(const std::string &arg) -> u64;
@@ -44,23 +45,29 @@ private:
   auto translateArgs(const std::array<std::string, 3> &args)
       -> std::array<u64, 3>;
 
+
+  auto isLabel(const std::string& label) -> bool; 
+
 public:
   Tokenizer(std::ifstream &&file);
   Tokenizer(const std::string &file);
   ~Tokenizer();
 
-  auto getTokens() -> const std::vector<ResolvedToken *> &;
+  auto getLabelsMap() -> const std::unordered_map<std::string, u64>&;
+  auto getTokens() -> const std::vector<ResolvedToken*>&;
 
   // Parses a file, returns an array of (unresolved) tokens
-  auto parse() -> std::vector<Token *>;
+  auto parse() -> std::vector<Token*>;
 
   // Generates resolved tokens, this tokens are the ones that will actually be
   // used
   auto resolveTokens(const std::vector<Token *> &tokens) -> void; // todo
 
   // Debug purposes
+  auto printTokenss(const std::vector<Token*>& tokens) -> void;
   auto printTokens() -> void;
   auto printTokensResolved() -> void;
+  auto printMap() -> void;
 };
 
 } // namespace Emulator

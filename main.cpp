@@ -8,11 +8,10 @@ auto main() -> int {
     auto cpu{new Emulator::CPU()};
     auto emulator{new Emulator::Engine(tokenizer, cpu)};
     VecU8 code{emulator->assembler()};
-    // emulator->printTokens();
     emulator->run(code);
     delete emulator;
   } catch (std::exception &e) {
-    std::cout << e.what();
+    std::cout << std::format("invalid\n");
   }
   return 0;
 }

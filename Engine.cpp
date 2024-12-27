@@ -14,7 +14,8 @@ static const std::unordered_map<std::string, u8> functMap{
 static const std::unordered_map<std::string, u8> opcodeMap{
     {"addi", 0x08},
     {"andi", 0x0C},
-    {"ori", 0x0D},
+    {"ori" , 0x0D},
+    {"beq" , 0x04},
 };
 
 Engine::~Engine() {
@@ -26,14 +27,12 @@ Engine::~Engine() {
 }
 
 auto Engine::assembleInstruction(VecU8 &program, ResolvedToken *token, u64 address) -> void {
-  u32 bin{0};
+  u32 bin = 0;
 
-  if (functMap.find(token->value) != end(functMap)) {
+  if (functMap.contains(token->value)) {
+    u8 funct{functMap.at(token->value)};
     u8 rs, rt, rd;
-    u8 shamt{0};
-
-    auto value{functMap.find(token->value)};
-    u8 funct{value->second};
+    u8 shamt = 0;
 
     rd = static_cast<u8>(token->args.at(0));
     if (token->value == "sll" || token->value == "srl") {
@@ -45,28 +44,32 @@ auto Engine::assembleInstruction(VecU8 &program, ResolvedToken *token, u64 addre
     }
 
     // Builds the 32 bits binary
-    bin |= (rs & 0x1F) << 21;   // rs
-    bin |= (rt & 0x1F) << 16;   // rt
-    bin |= (rd & 0x1F) << 11;   // rd
-    bin |= (shamt & 0x1F) << 6; // shamt
-    bin |= (funct & 0x3F) << 0; // funct
-  } else if (opcodeMap.find(token->value) != end(opcodeMap)) {
-    auto value{opcodeMap.find(token->value)};
+    bin |= (rs    & 0x1F) << 21;    // rs
+    bin |= (rt    & 0x1F) << 16;    // rt
+    bin |= (rd    & 0x1F) << 11;    // rd
+    bin |= (shamt & 0x1F) << 6;     // shamt
+    bin |= (funct & 0x3F) << 0;     // funct
+  } else if (opcodeMap.contains(token->value)) {
     u8 opcode, rt, rs;
     s16 imm;
 
-    opcode = value->second;
+    opcode = opcodeMap.at(token->value);
     rt = static_cast<u8>(token->args.at(0));
     rs = static_cast<u8>(token->args.at(1));
     imm = static_cast<s16>(token->args.at(2));
 
-    bin |= (opcode << 26);
-    bin |= (rs & 0x1F) << 21;
-    bin |= (rt & 0x1F) << 16;
-    bin |= (imm & 0xFFFF) << 0;
+    bin |= (opcode &   0x3F) << 26;
+    bin |= (rs     &   0x1F) << 21;
+    bin |= (rt     &   0x1F) << 16;
+    if (token->value == "beq") {
+      s32 offset = (imm - address) >> 2;
+      bin |= (offset & 0xFFFF);
+    } else {
+      bin |= (imm    & 0xFFFF);
+    }
+
   } else {
-    std::string err{std::format("Mnemonic {} in line {} not found\n",
-                                token->value, token->line)};
+    std::string err{std::format("Mnemonic {} in line {} not found\n", token->value, token->line)};
     throw std::runtime_error{err};
   }
 
@@ -91,16 +94,17 @@ auto Engine::assembleSysCall(VecU8 &program, ResolvedToken *token, u64 address)
   }
 }
 
-auto Engine::assemble(const std::vector<ResolvedToken *> &tokens) -> VecU8 {
+auto Engine::assemble(const std::vector<ResolvedToken*>& tokens) -> VecU8 {
   VecU8 program;
   u64 length{0};
   u64 address{0};
 
   // Pre-calculate program length to avoid realloc operations in vector
   for (size_t i = 0; i < size(tokens); i++) {
-    if (tokens.at(i)->type == Type::INSTRUCTION ||
-        tokens.at(i)->type == Type::SYS_CALL) {
+    if (tokens.at(i)->type == Type::INSTRUCTION || tokens.at(i)->type == Type::SYS_CALL) {
       length += 4;
+    } else {
+      length += tokens.at(i)->value.size();
     }
   }
   program.resize(length);
@@ -120,7 +124,7 @@ auto Engine::assemble(const std::vector<ResolvedToken *> &tokens) -> VecU8 {
 }
 
 auto Engine::assembler() -> VecU8 {
-  std::vector<Token *> tokens{this->tokenizer->parse()};
+  std::vector<Token*> tokens{this->tokenizer->parse()};
   this->tokenizer->resolveTokens(tokens);
 
   for (size_t i = 0; i < size(tokens); i++) {
@@ -169,5 +173,9 @@ auto Engine::setContentToAllRegisters() -> void {
 }
 
 auto Engine::printTokens() -> void { this->tokenizer->printTokensResolved(); }
+
+auto Engine::printMap() -> void {
+  this->tokenizer->printMap();
+}
 
 }

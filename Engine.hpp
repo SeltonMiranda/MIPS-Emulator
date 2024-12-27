@@ -33,6 +33,7 @@ public:
   auto printTokens() -> void;
   auto printContentFromAllRegisters() -> void;
   auto setContentToAllRegisters() -> void;
+  auto printMap() -> void;
 };
 
 }
