@@ -144,21 +144,21 @@ auto CPU::executeImm(Instruction i) -> void {
       }
       break;
     
-    case 0x05:
+    case 0x05: // bne 
       if (rsContent != rtContent) {
         s32 offset = this->immExt(i.imm) << 2 ;
         this->pc = u32(s32(this->pc) + offset) - 4;
       }
       break;
 
-    case 0x06:
+    case 0x06: // blt
       if (rtContent < rsContent) {
         s32 offset = this->immExt(i.imm) << 2 ;
         this->pc = u32(s32(this->pc) + offset) - 4;
       }
       break;
 
-    case 0x07:
+    case 0x07: // bge
       if (rtContent >= rsContent) {
         s32 offset = this->immExt(i.imm) << 2 ;
         this->pc = u32(s32(this->pc) + offset) - 4;
@@ -238,6 +238,7 @@ auto CPU::executeR(Instruction i) -> void {
 
 auto CPU::execute(u32 instruction) -> void {
   u32 opcode = (instruction >> 26) & 0x3F;
+  std::cout << std::bitset<32>(instruction) << "\n";
   Instruction i;
   switch (opcode) {
   case 0x00:

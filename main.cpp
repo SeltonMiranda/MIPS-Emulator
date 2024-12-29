@@ -21,8 +21,9 @@ auto main(int argc, char *argv[]) -> int {
     VecU8 code{emulator->assembler()};
     emulator->run(code);
     delete emulator;
-  } catch (std::exception &e) {
+  } catch (const std::exception& e) {
     std::cout << e.what();
   }
+
   return 0;
 }

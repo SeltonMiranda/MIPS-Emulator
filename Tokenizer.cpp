@@ -47,7 +47,9 @@ auto Tokenizer::parse() -> std::vector<Token*> {
 
   while (std::getline(this->file, line)) {
     VecString symbols; // Yes, I have to use vector because boost::split
+    
     boost::trim(line);
+    boost::algorithm::to_lower(line);
     boost::split(symbols, line, boost::is_any_of(", "), boost::token_compress_on);
     std::erase_if(symbols, [](const std::string &s) { return s.empty(); }); // Remove empty strings
 
