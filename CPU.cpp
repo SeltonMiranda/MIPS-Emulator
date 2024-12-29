@@ -200,7 +200,8 @@ auto CPU::executeR(Instruction i) -> void {
     break;
 
   case 0x08: // jr
-    this->pc = rsContent;
+    this->pc = rsContent - 4;
+    return;
     break;
 
   case 0x20: // add
@@ -255,8 +256,8 @@ auto CPU::execute(u32 instruction) -> void {
     this->executeImm(i);
     break;
 
-  case 0x02:
-  case 0x03:
+  case 0x02: // j
+  case 0x03: // jal
     i = this->parseJ(instruction);
     this->executeJ(i);
     break;

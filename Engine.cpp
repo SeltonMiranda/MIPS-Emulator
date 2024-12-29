@@ -9,6 +9,7 @@ namespace Emulator {
 static const std::unordered_map<std::string, u8> functMap {
     {"add", 0x20}, {"sub", 0x22},  {"and", 0x24}, {"or", 0x25},
     {"nor", 0x27},  {"sll", 0x00}, {"srl", 0x02}, {"slt", 0x2A},
+    {"jr" , 0x08}
 };
 
 static const std::unordered_map<std::string, u8> opcodeMap {
@@ -34,24 +35,37 @@ Engine::~Engine() {
     delete this->tokenizer;
 }
 
-auto Engine::assembleInstruction(VecU8 &program, ResolvedToken *token, u64 address) -> void {
+auto Engine::assembleInstruction(VecU8& program, ResolvedToken* token, u64 address) -> void {
   u32 bin = 0;
-
   if (functMap.contains(token->value)) {
-    u8 funct{functMap.at(token->value)};
-    u8 rs, rt, rd;
-    u8 shamt = 0;
+    u8 rs, rt, rd, shamt, funct;
 
+    shamt = 0;
+    funct = functMap.at(token->value);
     rd = static_cast<u8>(token->args.at(0));
-    if (token->value == "sll" || token->value == "srl") {
-      rt = static_cast<u8>(token->args.at(1));
-      shamt = static_cast<u8>(token->args.at(2));
-    } else {
-      rs = static_cast<u8>(token->args.at(1));
-      rt = static_cast<u8>(token->args.at(2));
+
+    switch (funct) {
+      case 0x00: // sll
+      case 0x02: // srl
+        rt = static_cast<u8>(token->args.at(1));
+        shamt = static_cast<u8>(token->args.at(2));
+        break;
+
+      case 0x20: // add
+      case 0x22: // sub
+      case 0x24: // and
+      case 0x25: // or
+      case 0x27: // nor 
+      case 0x2A: // slt
+        rs = static_cast<u8>(token->args.at(1));
+        rt = static_cast<u8>(token->args.at(2));
+        break;
+
+      case 0x08: // jr
+        rs = static_cast<u8>(token->args.at(0));
+        break;
     }
 
-    // Builds the 32 bits binary
     bin |= (rs    & 0x1F) << 21;    // rs
     bin |= (rt    & 0x1F) << 16;    // rt
     bin |= (rd    & 0x1F) << 11;    // rd
@@ -60,37 +74,49 @@ auto Engine::assembleInstruction(VecU8 &program, ResolvedToken *token, u64 addre
   } else if (opcodeMap.contains(token->value)) {
     u8 opcode, rt, rs;
     s16 imm;
-
-    opcode = opcodeMap.at(token->value);
+    
     rt = static_cast<u8>(token->args.at(0));
     rs = static_cast<u8>(token->args.at(1));
     imm = static_cast<s16>(token->args.at(2));
+    opcode = opcodeMap.at(token->value);
 
     bin |= (opcode &   0x3F) << 26;
     bin |= (rs     &   0x1F) << 21;
     bin |= (rt     &   0x1F) << 16;
-    if (token->value == "beq" || token->value == "bne" || token->value == "bge" || token->value == "blt") {
-      s32 offset = (imm - address) >> 2;
-      bin |= (offset & 0xFFFF);
-    } else {
-      bin |= (imm    & 0xFFFF);
-    }
+    
+    switch (opcode) {
+      case 0x04: // beq
+      case 0x05: // bne
+      case 0x06: // blt
+      case 0x07: // bge
+      {
+        s32 offset = (imm - address) >> 2;
+        bin |= (offset & 0xFFFF);
+      }
+      break;
 
+      case 0x08: // addi
+      case 0x0C: // andi
+      case 0x0D: // ori
+        bin |= (imm & 0xFFFF);
+      break;
+    }
   } else if (jumpMap.contains(token->value)) {
-    u8 opcode = jumpMap.at(token->value);
-    u32 address = static_cast<u32>(token->args.at(0));
+    u8 opcode;
+    u32 address;
+
+    opcode = jumpMap.at(token->value);
+    address = static_cast<u32>(token->args.at(0));
 
     bin |= (opcode & 0x3F) << 26;
     bin |= (address & 0x3FFFFFF);
-
   } else {
     std::string err{std::format("Mnemonic {} in line {} not found\n", token->value, token->line)};
     throw std::runtime_error{err};
   }
 
-  // inserts it to program code (big-endian)
   for (size_t i = 0; i < 4; i++) {
-    program[address + i] = static_cast<u8>((bin >> i * 8) & 0xFF);
+      program[address + i] = static_cast<u8>((bin >> i * 8) & 0xFF);
   }
 }
 
