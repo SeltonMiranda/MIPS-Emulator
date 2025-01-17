@@ -2,26 +2,57 @@
 
 namespace Emulator {
 
-Tokenizer::Tokenizer(std::ifstream &&file) : file{std::move(file)} {}
-
-Tokenizer::Tokenizer(const std::string &file) {
-  this->file.open(file);
-  if (!this->file.is_open()) {
-    throw std::runtime_error{"Couldn't open file\n"};
-  }
+auto Tokenizer::isSysCall(const std::string& call) -> bool {
+  return call == "ebreak";
 }
-
 
 auto Tokenizer::isLabel(const std::string& label) -> bool {
   return label.back() == ':';
 }
 
-auto Tokenizer::parse() -> std::vector<Token> {
-  std::string line;
-  std::vector<Token> tokens;
-  u64 address = 0;
+auto Tokenizer::parseLabel(std::string& symbol, u64 address) -> void {
+  symbol.erase(symbol.begin() + symbol.size() - 1); // remove ':'
+  this->labelsToAddress[symbol] = address;
+}
 
-  while (std::getline(this->file, line)) {
+auto Tokenizer::parseSysCall(std::string& symbol, u64 address) -> void {
+  this->tokens.push_back({Type::SYS_CALL, symbol, address});
+}
+
+auto Tokenizer::parseInstruction(VecString& symbols, u64 address, std::unordered_map<u64, VecString> _args) -> void {
+  Token instructionToken;
+  instructionToken.tokenType = Type::INSTRUCTION;
+  instructionToken.value = symbols[0];
+  instructionToken.address = address;
+  
+  std::vector<std::string> args;
+  for (size_t i = 1; i < 4; i++) {
+    args.push_back(symbols[i]);
+  }
+
+  if (!validateArgumentsSize(symbols[0], args)) {
+    throw std::invalid_argument(
+      std::format("ERROR! Not enough arguments")
+    );
+  }
+
+  _args[address] = args;
+}
+
+auto Tokenizer::parse(const std::string& file) -> void {
+  std::ifstream _file{file};
+
+  if (!_file.is_open()) {
+    throw std::runtime_error(
+      std::format("Couldn't open file {}", file)
+    );
+  }
+
+  std::string line;
+  u64 address = 0;
+  std::unordered_map<u64, VecString> _args;
+
+  while (std::getline(_file, line)) {
     VecString symbols;
 
     if (line.empty() || line[0] == '#') {
@@ -33,34 +64,73 @@ auto Tokenizer::parse() -> std::vector<Token> {
     boost::split(symbols, line, boost::is_any_of(", "), boost::token_compress_on);
 
     if (this->isLabel(symbols[0])) {
-      symbols[0].erase(symbols[0].begin() + symbols[0].size() - 1); // remove ':'
-      tokens.push_back({Type::LABEL, symbols[0], address});
-    } else if (symbols[0] == "ebreak") {
-      tokens.push_back({Type::SYS_CALL, symbols[0], address});
+      this->parseLabel(symbols[0], address);
+    } else if (this->isSysCall(symbols[0])) {
+      this->parseSysCall(symbols[0], address);
     } else {
-      Token instructionToken;
-      instructionToken.tokenType = Type::INSTRUCTION;
-      instructionToken.value = symbols[0];
-      
-      std::vector<std::string> args;
-
-      for (size_t i = 1; i < 4; i++) {
-        args.push_back(symbols[i]);
-      }
-
-
-      
+      this->parseInstruction(symbols, address, _args);
     }
-
     address += 4;
   }
-  return tokens;
+
+  for (auto& token : this->tokens) {
+    if (token.tokenType == Type::INSTRUCTION) {
+      token.args = this->parseArgs(_args[token.address]);
+      std::cout << std::format("address {}\n", token.address);
+    }
+  }
+
+  _file.close();
 }
 
-auto validateArguments(const std::vector<std::string>& args) -> bool {
-  u8 shouldHave;
+auto Tokenizer::parseArgs(const VecString& args) -> VecU64 {
 
 
+  VecU64 parsedArgs;
+  for (const auto& arg: args) {
+    if (this->labelsToAddress.contains(arg)) {
+      parsedArgs.push_back(this->labelsToAddress[arg]);
+    }
+
+    if ((0x30 <= arg.front() && arg.front() <= 0x39) || arg.front() == '-') {
+      parsedArgs.push_back(static_cast<u64>(std::stoi(arg)));
+    }
+
+    parsedArgs.push_back(this->parseRegister(arg.data()));
+  }
+
+  return parsedArgs;
+}
+
+static const std::unordered_map<std::string, u8> mnemonicArgsSizeMap = {
+  {"addi", 3},
+  {"andi", 3},
+  {"ori", 3},
+  {"add", 3},
+  {"sub", 3},
+  {"and", 3},
+  {"or", 3},
+  {"nor", 3},
+  {"sll", 3},
+  {"srl", 3},
+  {"slt", 3},
+  {"jr", 1},
+  {"beq" , 3},
+  {"bne" , 3},
+  {"blt" , 3},
+  {"bge" , 3},
+  {"j"  , 1},
+  {"jal", 1},
+};
+
+auto Tokenizer::validateArgumentsSize(const std::string& mnemonic, const VecString& args) -> bool {
+  auto it = mnemonicArgsSizeMap.find(mnemonic);
+  if (it == mnemonicArgsSizeMap.end()) {
+    throw std::invalid_argument(
+      std::format("ERROR! mnemonic not found\n")
+    );
+  }
+  return args.size() == it->second;
 }
 
 static const std::unordered_map<std::string, u64> fixedRegisters = {

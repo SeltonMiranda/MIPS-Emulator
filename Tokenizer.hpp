@@ -14,33 +14,29 @@ struct Token {
   Type tokenType;
   std::string value;
   u64 address;
-  std::vector<u64> args;
+  VecU64 args;
 };
 
 class Tokenizer {
 public:
-  std::ifstream file;
   std::vector<Token> tokens;
-
-  // Translates the argument
-  auto translate(const std::string &arg) -> u64;
+  std::unordered_map<std::string, u64> labelsToAddress;
 
   // Parses the register's number
   auto parseRegister(const char *arg) -> u64;
 
-  // Translantes arguments into an array of u64
-  auto translateArgs(const VecString& args) -> VecU64;
+  auto parseLabel(std::string& symbol, u64 address) -> void;
+  auto parseSysCall(std::string& symbol, u64 address) -> void;
+  auto parseInstruction(VecString& symbols, u64 address, std::unordered_map<u64, VecString> _args) -> void;
 
-
+  auto isSysCall(const std::string& call) -> bool;
   auto isLabel(const std::string& label) -> bool; 
+  auto parseArgs(const VecString& args) -> VecU64;
+  auto validateArgumentsSize(const std::string& mnemonic, const VecString& args) -> bool;
 
-  auto validateArguments(const std::vector<std::string>& args) -> bool;
-
-  Tokenizer(std::ifstream &&file);
-  Tokenizer(const std::string &file);
 
   // Parses a file, returns an array of (unresolved) tokens
-  auto parse() -> std::vector<Token>;
+  auto parse(const std::string& file) -> void;
 
 };
 

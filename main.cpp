@@ -8,19 +8,23 @@ auto main(int argc, char *argv[]) -> int {
     return 0;
   }
 
-  std::string text = std::string(argv[1]);
-  if (!text.contains(".asm")) {
+  std::string program = std::string(argv[1]);
+  if (!program.contains(".asm")) {
     std::cout << std::format("You must use only .asm files\n");
     return 0;
   }
 
+  Emulator::Tokenizer tokenizer;
+  Emulator::CPU cpu;
+  Emulator::Engine engine(tokenizer, cpu);
+
   try {
-    auto tokenizer{new Emulator::Tokenizer{text}};
-    auto cpu{new Emulator::CPU()};
-    auto emulator{new Emulator::Engine(tokenizer, cpu)};
-    VecU8 code{emulator->assembler()};
-    emulator->run(code);
-    delete emulator;
+    auto [code, size] = engine.assembler(program);
+    if (code != nullptr) {
+      engine.run(std::span<u8>(code, size));
+    } else {
+      throw std::runtime_error("Couldn't assemble program\n");
+    }
   } catch (const std::exception& e) {
     std::cout << e.what();
   }

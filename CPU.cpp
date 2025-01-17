@@ -16,7 +16,7 @@ auto CPU::hasHalted() -> bool {
   return this->halt;
 }
 
-auto CPU::loadProgram(const VecU8 &program) -> void {
+auto CPU::loadProgram(const std::span<u8> program) -> void {
   if (size(program) > this->max_size - 1) {
     std::cout << std::format("Program is too large to fit in memory\n");
     return;
@@ -34,15 +34,17 @@ auto CPU::readMemory(u64 address) -> u8 {
   return this->mem[address];
 }
 
-auto CPU::readMemoryBlock(u64 address, u32 size) -> VecU8 {
-  u64 end{address + size - 1};
+auto CPU::readMemoryBlock(u64 address, u32 size) -> u8* {
+  u64 end = address + size - 1;
   if (end > this->max_size - 1) {
     std::cout << std::format("Out of bounds for memory\n");
-    return VecU8(0);
+    return nullptr;
   }
 
-  VecU8 Block(this->mem + address, this->mem + end + 1);
-  return Block;
+  u8* block = new u8[size];
+  std::memcpy(block, this->mem + address, size);
+
+  return block;
 }
 
 auto CPU::writeMemory(u64 address, u8 value) -> void {
@@ -53,11 +55,12 @@ auto CPU::writeMemory(u64 address, u8 value) -> void {
   this->mem[address] = value;
 }
 
-auto CPU::writeMemoryBlock(u64 address, const VecU8 &value) -> void {
-  u64 end{address + static_cast<u32>(value.size()) - 1};
-  if (end > this->max_size - 1)
+auto CPU::writeMemoryBlock(u64 address, const std::span<u8> value) -> void {
+  u64 end = address + static_cast<u32>(value.size()) - 1;
+  if (end > this->max_size - 1) {
     throw std::runtime_error(
         "ERROR! Address is bigger than 2^32 bits address space\n");
+  }
 
   for (const auto &content : value) {
     this->mem[address] = content;

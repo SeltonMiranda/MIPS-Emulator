@@ -41,7 +41,7 @@ public:
   constexpr inline auto zeroExt(s16 imm) -> u32;
 
   // Self-explanatory
-  auto loadProgram(const VecU8& program) -> void;
+  auto loadProgram(const std::span<u8> program) -> void;
 
   auto parseJ(u32 instruction) -> Instruction;
  
@@ -72,13 +72,13 @@ public:
   auto readMemory(u64 address) -> u8;
 
   // Reads "size" bytes from memory
-  auto readMemoryBlock(u64 address, u32 size) -> VecU8;
+  auto readMemoryBlock(u64 address, u32 size) -> u8*;
 
   // Writes 1 byte to memory
   auto writeMemory(u64 address, u8 value) -> void;
 
   // Writes "len(value)" bytes to memory
-  auto writeMemoryBlock(u64 address, const VecU8 &value) -> void;
+  auto writeMemoryBlock(u64 address, const std::span<u8> value) -> void;
 };
 
 }

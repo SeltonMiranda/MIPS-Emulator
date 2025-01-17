@@ -6,6 +6,9 @@
 #include <iostream>
 #include <limits>
 #include <vector>
+#include <tuple>
+#include <span>
+
 
 using VecU64 = std::vector<std::uint64_t>;
 using VecU32 = std::vector<std::uint32_t>;
