@@ -18,7 +18,7 @@ private:
     s16 imm;
   };
 
-  VecU8 mem;
+  u8* mem;
   std::array<s32, 32> registers;
   u32 max_size;
   u32 pc;

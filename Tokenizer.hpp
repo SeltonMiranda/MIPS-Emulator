@@ -8,32 +8,19 @@
 
 namespace Emulator {
 
-enum class Type { INSTRUCTION, ARG, SYS_CALL, LABEL };
+enum class Type { INSTRUCTION, SYS_CALL, LABEL };
 
-struct Token // (Unresolved token)
-{
-  Type type;         // Type of the token
-  size_t line;       // line that token was in it
-  std::string value; // his value (may be an instruction, arg, label, literal)
-
-  Token(Type type, size_t line, const std::string &value);
-};
-
-struct ResolvedToken {
-  Type type;               // Type of the token (INSTRUCTION, LABEL, LITERAL)
-  size_t line;             // Line where it was found
-  std::string value;       // mnemonic or label or literal
-  u64 address;             // address
-  VecU64 args; // registers (rd, rs, rt)
-
-  ResolvedToken(Type type, size_t line, const std::string &value, u64 address);
+struct Token {
+  Type tokenType;
+  std::string value;
+  u64 address;
+  std::vector<u64> args;
 };
 
 class Tokenizer {
-private:
-  std::ifstream file;                          // input file stream
-  std::vector<ResolvedToken *> resolvedTokens; // self-explanatory
-  std::unordered_map<std::string, u64> labelsToAddress;
+public:
+  std::ifstream file;
+  std::vector<Token> tokens;
 
   // Translates the argument
   auto translate(const std::string &arg) -> u64;
@@ -47,26 +34,14 @@ private:
 
   auto isLabel(const std::string& label) -> bool; 
 
-public:
+  auto validateArguments(const std::vector<std::string>& args) -> bool;
+
   Tokenizer(std::ifstream &&file);
   Tokenizer(const std::string &file);
-  ~Tokenizer();
-
-  auto getLabelsMap() -> const std::unordered_map<std::string, u64>&;
-  auto getTokens() -> const std::vector<ResolvedToken*>&;
 
   // Parses a file, returns an array of (unresolved) tokens
-  auto parse() -> std::vector<Token*>;
+  auto parse() -> std::vector<Token>;
 
-  // Generates resolved tokens, this tokens are the ones that will actually be
-  // used
-  auto resolveTokens(const std::vector<Token *> &tokens) -> void; // todo
-
-  // Debug purposes
-  auto printTokenss(const std::vector<Token*>& tokens) -> void;
-  auto printTokens() -> void;
-  auto printTokensResolved() -> void;
-  auto printMap() -> void;
 };
 
 } // namespace Emulator

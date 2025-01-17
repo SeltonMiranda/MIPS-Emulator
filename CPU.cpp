@@ -6,7 +6,7 @@ namespace Emulator {
 
 CPU::CPU() {
   this->max_size = std::numeric_limits<uint32_t>::max();
-  this->mem.resize(this->max_size);
+  this->mem = new u8[this->max_size];
   this->pc = 0;
   this->registers.fill(0);
   this->halt = false;
@@ -41,7 +41,7 @@ auto CPU::readMemoryBlock(u64 address, u32 size) -> VecU8 {
     return VecU8(0);
   }
 
-  VecU8 Block(begin(this->mem) + address, begin(this->mem) + end + 1);
+  VecU8 Block(this->mem + address, this->mem + end + 1);
   return Block;
 }
 

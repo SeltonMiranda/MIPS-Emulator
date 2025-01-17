@@ -11,7 +11,7 @@ $(EXECUTABLE): $(OBJECTS)
 	g++ $(CPPFLAGS) -o $@ $^
 
 	
-build/%.o: %.cpp | build
+build/%.o: %.cpp
 	@echo building objects...
 	@mkdir -p build
 	g++ $(CPPFLAGS) -c $< -o $@
