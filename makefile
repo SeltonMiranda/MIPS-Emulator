@@ -21,4 +21,4 @@ run:
 
 clean:
 	@echo cleaning up...
-	rm -rf $(EXECUTABLE) *.gch build/*
+	rm -rf $(EXECUTABLE) *.gch build/
