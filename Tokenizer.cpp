@@ -16,10 +16,14 @@ auto Tokenizer::parseLabel(std::string& symbol, u64 address) -> void {
 }
 
 auto Tokenizer::parseSysCall(std::string& symbol, u64 address) -> void {
-  this->tokens.push_back({Type::SYS_CALL, symbol, address});
+  Token SysCallToken;
+  SysCallToken.tokenType = Type::SYS_CALL;
+  SysCallToken.value = symbol;
+  SysCallToken.address = address;
+  this->tokens.push_back(SysCallToken);
 }
 
-auto Tokenizer::parseInstruction(VecString& symbols, u64 address, std::unordered_map<u64, VecString> _args) -> void {
+auto Tokenizer::parseInstruction(VecString& symbols, u64 address, std::unordered_map<u64, VecString>& _args) -> void {
   Token instructionToken;
   instructionToken.tokenType = Type::INSTRUCTION;
   instructionToken.value = symbols[0];
@@ -35,6 +39,8 @@ auto Tokenizer::parseInstruction(VecString& symbols, u64 address, std::unordered
       std::format("ERROR! Not enough arguments")
     );
   }
+
+  this->tokens.push_back(instructionToken);
 
   _args[address] = args;
 }
@@ -73,10 +79,9 @@ auto Tokenizer::parse(const std::string& file) -> void {
     address += 4;
   }
 
-  for (auto& token : this->tokens) {
+  for (auto& token : this->tokens) {  
     if (token.tokenType == Type::INSTRUCTION) {
       token.args = this->parseArgs(_args[token.address]);
-      std::cout << std::format("address {}\n", token.address);
     }
   }
 
@@ -84,19 +89,15 @@ auto Tokenizer::parse(const std::string& file) -> void {
 }
 
 auto Tokenizer::parseArgs(const VecString& args) -> VecU64 {
-
-
   VecU64 parsedArgs;
   for (const auto& arg: args) {
     if (this->labelsToAddress.contains(arg)) {
       parsedArgs.push_back(this->labelsToAddress[arg]);
-    }
-
-    if ((0x30 <= arg.front() && arg.front() <= 0x39) || arg.front() == '-') {
+    } else if ((0x30 <= arg.front() && arg.front() <= 0x39) || arg.front() == '-') {
       parsedArgs.push_back(static_cast<u64>(std::stoi(arg)));
+    } else {
+      parsedArgs.push_back(this->parseRegister(arg.data()));
     }
-
-    parsedArgs.push_back(this->parseRegister(arg.data()));
   }
 
   return parsedArgs;

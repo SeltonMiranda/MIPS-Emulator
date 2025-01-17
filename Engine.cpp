@@ -34,6 +34,7 @@ auto Engine::assembleInstruction(u8* program, const Token& token, u64 address) -
     u8 rs, rt, rd, shamt, funct;
 
     shamt = 0;
+ 
     funct = functMap.at(token.value);
     rd = static_cast<u8>(token.args.at(0));
 
@@ -71,7 +72,9 @@ auto Engine::assembleInstruction(u8* program, const Token& token, u64 address) -
     rt = static_cast<u8>(token.args.at(0));
     rs = static_cast<u8>(token.args.at(1));
     imm = static_cast<s16>(token.args.at(2));
+       std::cout << std::format("aqui?\n");
     opcode = opcodeMap.at(token.value);
+       std::cout << std::format("aqui? 2\n");
 
     bin |= (opcode &   0x3F) << 26;
     bin |= (rs     &   0x1F) << 21;
@@ -108,9 +111,15 @@ auto Engine::assembleInstruction(u8* program, const Token& token, u64 address) -
     throw std::runtime_error(err);
   }
 
+  // debug
+  std::cout << std::format("binário formado: \n");
+  std::cout << std::bitset<32>(bin) << '\n';
+
+  std::cout << std::format("aqui? 1\n");
   for (size_t i = 0; i < 4; i++) {
       program[address + i] = static_cast<u8>((bin >> i * 8) & 0xFF);
   }
+  std::cout << std::format("aqui? 2\n");
 }
 
 auto Engine::assembleSysCall(u8* program, const Token& token, u64 address)
@@ -142,8 +151,9 @@ auto Engine::assembler(const std::string& file) -> std::tuple<u8*, size_t> {
       length += token.value.size();
     }
   }
+  
   program = new u8[length];
-
+  
   for (const auto& token : this->tokenizer.tokens) {
     if (token.tokenType == Type::INSTRUCTION) {
       this->assembleInstruction(program, token, address);

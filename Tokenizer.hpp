@@ -27,7 +27,7 @@ public:
 
   auto parseLabel(std::string& symbol, u64 address) -> void;
   auto parseSysCall(std::string& symbol, u64 address) -> void;
-  auto parseInstruction(VecString& symbols, u64 address, std::unordered_map<u64, VecString> _args) -> void;
+  auto parseInstruction(VecString& symbols, u64 address, std::unordered_map<u64, VecString>& _args) -> void;
 
   auto isSysCall(const std::string& call) -> bool;
   auto isLabel(const std::string& label) -> bool; 
