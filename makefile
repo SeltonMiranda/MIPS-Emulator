@@ -1,4 +1,5 @@
-CPPFLAGS = -std=c++23 -Wall -pedantic -g -I/usr/include/boost
+CPPFLAGS =-std=c++23 -Wall -pedantic -Oz -g0 -ffunction-sections -fdata-sections -Wl,--gc-sections -I/usr/include/boost
+
 OBJECTS = build/main.o build/Tokenizer.o build/Engine.o build/CPU.o
 
 EXECUTABLE = emulator
@@ -19,5 +20,5 @@ run:
 	./$(EXECUTABLE)
 
 clean:
-	@echo cleaning...
+	@echo cleaning up...
 	rm -rf $(EXECUTABLE) *.gch build/*

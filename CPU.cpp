@@ -238,7 +238,6 @@ auto CPU::executeR(Instruction i) -> void {
 
 auto CPU::execute(u32 instruction) -> void {
   u32 opcode = (instruction >> 26) & 0x3F;
-  std::cout << std::bitset<32>(instruction) << "\n";
   Instruction i;
   switch (opcode) {
   case 0x00:
