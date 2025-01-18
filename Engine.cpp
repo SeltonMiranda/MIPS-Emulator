@@ -173,14 +173,6 @@ auto Engine::run(const std::span<u8>& code) -> void {
   this->printContentFromAllRegisters();                    // Debug
 }
 
-// Debug
-auto Engine::printBinaryProgram(const std::vector<std::uint8_t> &program)
-    -> void {
-  for (const auto &code : program) {
-    std::cout << std::bitset<8>(code) << '\n';
-  }
-}
-
 auto Engine::printContentFromAllRegisters() -> void {
   for (uint32_t i = 0; i < 32; i++) {
     std::cout << std::format("Content from register {} = {}\n", i,

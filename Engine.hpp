@@ -19,13 +19,8 @@ public:
 
   auto run(const std::span<u8>& code) -> void;
   auto assembler(const std::string& file) -> std::tuple<u8*, size_t>;
-
-  // Debug purposes
-  auto printBinaryProgram(const VecU8 &program) -> void;
-  auto printTokens() -> void;
   auto printContentFromAllRegisters() -> void;
   auto setContentToAllRegisters() -> void;
-  auto printMap() -> void;
 };
 
 }

@@ -31,7 +31,6 @@ public:
   auto parseArgs(const VecString& args) -> VecU64;
   auto validateArgumentsSize(const std::string& mnemonic, const VecString& args) -> bool;
   auto parse(const std::string& file) -> void;
-
 };
 
 } // namespace Emulator
