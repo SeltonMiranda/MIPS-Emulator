@@ -3,4 +3,5 @@
 emulator
 *.txt
 *.asm
+build/
 tests-examples/
