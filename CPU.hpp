@@ -7,7 +7,7 @@ namespace Emulator {
 
 class CPU {
 private:
-  struct Instruction { // intermediate (may be a union? Have to think about it)
+  struct Instruction { 
     u64 address;
     u32 opcode;
     u32 rd;

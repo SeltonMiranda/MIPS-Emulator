@@ -83,13 +83,7 @@ auto Tokenizer::parse(const std::string& file) -> void {
       token.args = this->parseArgs(_args[token.address]);
     }
   }
-
-  //debug
-  for (const auto& [key, value] : this->labelsToAddress) {
-    std::cout << std::format("key {} value {}\n", key, value);
-  }
-  //debug
-
+  
   _file.close();
 }
 

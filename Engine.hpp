@@ -1,9 +1,3 @@
-// TODO
-// Branch instructions
-// Jump instructions
-// Store and Load instructions
-
-
 #pragma once
 
 #include "CPU.hpp"

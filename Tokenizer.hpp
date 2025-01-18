@@ -1,6 +1,3 @@
-// TODO
-// Remember to deallocate memory for std::vector<Token*>
-
 #ifndef _TOKENIZER_
 #define _TOKENIZER_
 
@@ -33,9 +30,6 @@ public:
   auto isLabel(const std::string& label) -> bool; 
   auto parseArgs(const VecString& args) -> VecU64;
   auto validateArgumentsSize(const std::string& mnemonic, const VecString& args) -> bool;
-
-
-  // Parses a file, returns an array of (unresolved) tokens
   auto parse(const std::string& file) -> void;
 
 };

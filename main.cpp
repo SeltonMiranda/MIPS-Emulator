@@ -1,4 +1,3 @@
-
 #include "Engine.hpp"
 
 auto main(int argc, char *argv[]) -> int {

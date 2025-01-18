@@ -16,9 +16,6 @@ build/%.o: %.cpp
 	@mkdir -p build
 	g++ $(CPPFLAGS) -c $< -o $@
 
-run:
-	./$(EXECUTABLE)
-
 clean:
 	@echo cleaning up...
 	rm -rf $(EXECUTABLE) *.gch build/
