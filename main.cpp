@@ -19,21 +19,14 @@ auto main(int argc, char *argv[]) -> int {
   Emulator::Engine engine(tokenizer, cpu);
 
   try {
+
     auto [code, size] = engine.assembler(program);
-    std::cout << std::format("size of code {}\n", size);
-    for (size_t i = 0; i < size; i++) {
-      std::cout << std::format("code[{}]: {}\n", i, code[i]);
-    }
-    //if (code != nullptr) {
-    //  for (size_t i = 0; i < size; i++) {
-    //    std::cout << std::format("address {} : {}\n", i, code[i]);
-    //  }
-    //  //engine.run(std::span<u8>(code, size));
-    //} else {
-    //  throw std::runtime_error("Couldn't assemble program\n");
-    //}
+    engine.run(std::span<u8>(code, size));
+
   } catch (const std::exception& e) {
+
     std::cout << e.what();
+
   }
 
   return 0;

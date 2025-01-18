@@ -30,7 +30,7 @@ auto Tokenizer::parseInstruction(VecString& symbols, u64 address, std::unordered
   instructionToken.address = address;
   
   std::vector<std::string> args;
-  for (size_t i = 1; i < 4; i++) {
+  for (size_t i = 1; i < size(symbols); i++) {
     args.push_back(symbols[i]);
   }
 
@@ -60,23 +60,22 @@ auto Tokenizer::parse(const std::string& file) -> void {
 
   while (std::getline(_file, line)) {
     VecString symbols;
-
-    if (line.empty() || line[0] == '#') {
+    boost::trim(line);
+    if (line.empty() || line.starts_with('#')) {
       continue;
     }
-    
-    boost::trim(line);
+
     boost::algorithm::to_lower(line);
     boost::split(symbols, line, boost::is_any_of(", "), boost::token_compress_on);
-
     if (this->isLabel(symbols[0])) {
       this->parseLabel(symbols[0], address);
     } else if (this->isSysCall(symbols[0])) {
       this->parseSysCall(symbols[0], address);
+      address += 4;
     } else {
       this->parseInstruction(symbols, address, _args);
+      address += 4;
     }
-    address += 4;
   }
 
   for (auto& token : this->tokens) {  
@@ -84,6 +83,12 @@ auto Tokenizer::parse(const std::string& file) -> void {
       token.args = this->parseArgs(_args[token.address]);
     }
   }
+
+  //debug
+  for (const auto& [key, value] : this->labelsToAddress) {
+    std::cout << std::format("key {} value {}\n", key, value);
+  }
+  //debug
 
   _file.close();
 }
@@ -128,7 +133,7 @@ auto Tokenizer::validateArgumentsSize(const std::string& mnemonic, const VecStri
   auto it = mnemonicArgsSizeMap.find(mnemonic);
   if (it == mnemonicArgsSizeMap.end()) {
     throw std::invalid_argument(
-      std::format("ERROR! mnemonic not found\n")
+      std::format("ERROR! mnemonic not found {}\n", mnemonic)
     );
   }
   return args.size() == it->second;
@@ -150,12 +155,13 @@ auto Tokenizer::parseRegister(const char *arg) -> u64 {
 
   char prefix{arg[0]};
   u64 number;
-  try {
-    number = std::atoi(arg + 1);
-  } catch (std::exception &e) {
-    throw std::invalid_argument("No such register " + std::string(arg));
-  }
 
+  if (1 < strlen(arg) && strlen(arg) <= 2) {
+    number = std::atoi(arg + 1);
+  } else {
+    throw std::invalid_argument(std::format("ERROR! No such a register {}\n", arg));
+  }
+ 
   switch (prefix) {
   case 't':
     return (number < 8) ? number + 8 : number + 16;
@@ -166,7 +172,7 @@ auto Tokenizer::parseRegister(const char *arg) -> u64 {
   case '$':
     return number;
   default:
-    throw std::invalid_argument("No such register: " + std::string(arg) + "\n");
+    throw std::invalid_argument(std::format("ERROR! No such a register {}\n", arg));
   }
 }
 
