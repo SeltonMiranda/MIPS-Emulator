@@ -27,7 +27,7 @@ auto CPU::loadProgram(const std::span<u8> program) -> void {
 
 auto CPU::readMemory(u64 address) -> u8 {
   if (address > this->max_size) {
-    std::cout << std::format("Out of bounds for memory\n");
+    std::cout << std::format("Out of bounds\n");
     return 0;
   }
 
@@ -37,7 +37,7 @@ auto CPU::readMemory(u64 address) -> u8 {
 auto CPU::readMemoryBlock(u64 address, u32 size) -> u8* {
   u64 end = address + size - 1;
   if (end > this->max_size - 1) {
-    std::cout << std::format("Out of bounds for memory\n");
+    std::cout << std::format("Out of bounds\n");
     return nullptr;
   }
 
@@ -190,7 +190,7 @@ auto CPU::executeImm(Instruction i) -> void {
 auto CPU::executeR(Instruction i) -> void {
   s32 rsContent{this->readRegister(i.rs)};
   s32 rtContent{this->readRegister(i.rt)};
-  s32 valueToWrite;
+  s32 valueToWrite = 0;
 
   switch (i.funct) {
 

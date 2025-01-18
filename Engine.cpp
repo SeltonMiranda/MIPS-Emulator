@@ -32,7 +32,7 @@ auto Engine::assembleInstruction(u8* program, const Token& token, u64 address) -
   u32 bin = 0;
   if (functMap.contains(token.value)) {
     u8 rs, rt, rd, shamt, funct;
-
+    rs = rt = 0;
     shamt = 0;
  
     funct = functMap.at(token.value);
