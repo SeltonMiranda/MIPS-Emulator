@@ -9,7 +9,7 @@ namespace Emulator {
 static const std::unordered_map<std::string, u8> functMap {
     {"add", 0x20}, {"sub", 0x22},  {"and", 0x24}, {"or", 0x25},
     {"nor", 0x27},  {"sll", 0x00}, {"srl", 0x02}, {"slt", 0x2A},
-    {"jr" , 0x08}
+    {"jr" , 0x08},
 };
 
 static const std::unordered_map<std::string, u8> opcodeMap {
@@ -20,6 +20,8 @@ static const std::unordered_map<std::string, u8> opcodeMap {
     {"bne" , 0x05},
     {"blt" , 0x06}, // Pseudo
     {"bge" , 0x07}, // Pseudo
+    {"lw"  , 0x23},
+    {"sw"  , 0x2b},
 };
 
 static const std::unordered_map<std::string, u8> jumpMap {
@@ -77,7 +79,6 @@ auto Engine::assembleInstruction(u8* program, const Token& token, u64 address) -
     bin |= (opcode &   0x3F) << 26;
     bin |= (rs     &   0x1F) << 21;
     bin |= (rt     &   0x1F) << 16;
-    
     switch (opcode) {
       case 0x04: // beq
       case 0x05: // bne
@@ -92,6 +93,8 @@ auto Engine::assembleInstruction(u8* program, const Token& token, u64 address) -
       case 0x08: // addi
       case 0x0C: // andi
       case 0x0D: // ori
+      case 0x23: // lw
+      case 0x2b: // sw
         bin |= (imm & 0xFFFF);
       break;
     }
@@ -106,8 +109,8 @@ auto Engine::assembleInstruction(u8* program, const Token& token, u64 address) -
   } else {
     std::string err{std::format("Mnemonic {} not found\n", token.value)};
     throw std::runtime_error(err);
-  }
-
+  } 
+  std::cout << "binary " << std::bitset<32>(bin) << '\n';
   for (size_t i = 0; i < 4; i++) {
       program[address + i] = static_cast<u8>((bin >> i * 8) & 0xFF);
   }
@@ -115,7 +118,7 @@ auto Engine::assembleInstruction(u8* program, const Token& token, u64 address) -
 
 auto Engine::assembleSysCall(u8* program, const Token& token, u64 address)
     -> void {
-  u32 bin{0};
+  u32 bin = 0;
   // An ebreak is a R-type instruction with all
   // fields filled with zeroes except funct
   if (token.value == "ebreak") {
@@ -171,6 +174,8 @@ auto Engine::run(const std::span<u8>& code) -> void {
 
   std::cout << "--------------------------------------\n"; // Debug
   this->printContentFromAllRegisters();                    // Debug
+
+  this->cpu.dumpMemory(code.size());
 }
 
 auto Engine::printContentFromAllRegisters() -> void {

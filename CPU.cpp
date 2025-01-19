@@ -9,6 +9,7 @@ CPU::CPU() {
   this->mem = new u8[this->max_size];
   this->pc = 0;
   this->registers.fill(0);
+  this->registers[29] = this->max_size;
   this->halt = false;
 }
 
@@ -56,7 +57,10 @@ auto CPU::writeMemory(u64 address, u8 value) -> void {
 }
 
 auto CPU::writeMemoryBlock(u64 address, const std::span<u8> value) -> void {
-  u64 end = address + static_cast<u32>(value.size()) - 1;
+  std::cout << "address " << address << '\n';
+  std::cout << "max address " << this->max_size << '\n';
+  std::cout << "hex " << std::hex << value.data() << '\n';
+  u64 end = static_cast<u32>(address) + static_cast<u32>(value.size()) - 1;
   if (end > this->max_size - 1) {
     throw std::runtime_error(
         "ERROR! Address is bigger than 2^32 bits address space\n");
@@ -82,7 +86,7 @@ auto CPU::readRegister(u32 index) -> s32 {
 auto CPU::nextInstruction() -> void {
   auto value{this->readMemoryBlock(this->pc, 4)};
 
-  u32 instruction{u32((value[0] << 0)) | u32((value[1] << 8)) |
+  u32 instruction{u32((value[0] <<  0)) | u32((value[1] <<  8)) |
                   u32((value[2] << 16)) | u32((value[3] << 24))};
   this->execute(instruction);
 }
@@ -138,6 +142,7 @@ auto CPU::executeImm(Instruction i) -> void {
   s32 rsContent = this->readRegister(i.rs);
   s32 rtContent = this->readRegister(i.rt);
   s32 valueToWrite;
+  u8 valueToStore[4];
 
   switch (i.opcode) {
     case 0x04: // beq
@@ -181,6 +186,28 @@ auto CPU::executeImm(Instruction i) -> void {
     case 0x0D: // ori
       valueToWrite = rsContent | this->zeroExt(i.imm);
       this->writeRegister(i.rt, valueToWrite);
+      break;
+
+    case 0x23: // lw
+      valueToWrite = this->mem[rsContent + this->immExt(i.imm)];
+      this->writeRegister(i.rt, valueToWrite);
+      break;
+
+    case 0x2b:
+      std::cout << std::format("index rt : {}, index rs {}\n", i.rt, i.rs);
+      for (u8 i = 0; i < 4; i++) {
+        valueToStore[i] = static_cast<u8>((rsContent >> i * 8) & 0xFF);
+      }
+
+      for (size_t i = 0 ; i < 4; i++) {
+        std::cout << std::format("value {} : {}", i, valueToStore[i]); 
+      }
+      std::cout << '\n';
+
+      this->writeMemoryBlock(
+        rtContent + this->immExt(i.imm),
+        std::span<u8>(valueToStore, 4)
+      );
       break;
 
   }
@@ -255,6 +282,8 @@ auto CPU::execute(u32 instruction) -> void {
   case 0x08: // addi
   case 0x0C: // andi
   case 0x0D: // ori
+  case 0x23:
+  case 0x2b:
     i = this->parseImm(instruction);
     this->executeImm(i);
     break;
@@ -269,6 +298,14 @@ auto CPU::execute(u32 instruction) -> void {
     std::cout << std::bitset<32>(instruction) << " ";
     std::cout << std::format("Not implemented yet\n");
     break;
+  }
+}
+
+auto CPU::dumpMemory(size_t size) -> void {
+  for (size_t i = 0; i < 68; i += 4) {
+     u32 instruction{u32((this->mem[i] <<  0)) | u32((this->mem[i + 1] <<  8)) |
+                  u32((this->mem[i + 2] << 16)) | u32((this->mem[i + 3] << 24))};
+    std::cout << std::showbase << std::hex << instruction << '\n';
   }
 }
 

@@ -121,6 +121,8 @@ static const std::unordered_map<std::string, u8> mnemonicArgsSizeMap = {
   {"bge" , 3},
   {"j"  , 1},
   {"jal", 1},
+  {"sw", 3},
+  {"lw", 3},
 };
 
 auto Tokenizer::validateArgumentsSize(const std::string& mnemonic, const VecString& args) -> bool {

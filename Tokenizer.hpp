@@ -9,9 +9,9 @@ enum class Type { INSTRUCTION, SYS_CALL, LABEL };
 
 struct Token {
   Type tokenType;
-  std::string value;
   u64 address;
   VecU64 args;
+  std::string value;
 };
 
 class Tokenizer {

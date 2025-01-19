@@ -18,8 +18,8 @@ private:
     s16 imm;
   };
 
-  u8* mem;
   std::array<s32, 32> registers;
+  u8* mem;
   u32 max_size;
   u32 pc;
   bool halt;
@@ -79,6 +79,8 @@ public:
 
   // Writes "len(value)" bytes to memory
   auto writeMemoryBlock(u64 address, const std::span<u8> value) -> void;
+
+  auto dumpMemory(size_t size) -> void;
 };
 
 }
