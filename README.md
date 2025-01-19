@@ -5,10 +5,6 @@ This project is a work-in-progress emulator for the MIPS instruction set. It doe
 ## Status
 **Still in development**
 
-Currently implementing:
-- `lw` (Load Word)
-- `sw` (Store Word)
-
 ## Requirements
 - linux
 - g++ compiler
