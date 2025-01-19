@@ -28,7 +28,7 @@ auto CPU::loadProgram(const std::span<u8> program) -> void {
 
 auto CPU::readMemory(u64 address) -> u8 {
   if (address > this->max_size) {
-    std::cout << std::format("Out of bounds\n");
+    std::cout << std::format("ERROR! Address {} is bigger than 32 bits addres space\n", address);
     return 0;
   }
 
@@ -38,7 +38,7 @@ auto CPU::readMemory(u64 address) -> u8 {
 auto CPU::readMemoryBlock(u64 address, u32 size) -> u8* {
   u64 end = address + size - 1;
   if (end > this->max_size - 1) {
-    std::cout << std::format("Out of bounds\n");
+    std::cout << std::format("ERROR! Address {} is bigger than 32 bits addres space\n", end);
     return nullptr;
   }
 
@@ -49,21 +49,20 @@ auto CPU::readMemoryBlock(u64 address, u32 size) -> u8* {
 }
 
 auto CPU::writeMemory(u64 address, u8 value) -> void {
-  if (address > this->max_size - 1)
+  if (address > this->max_size - 1) {
     throw std::runtime_error(
-        "ERROR! Address is bigger than 2^32 bits address space\n");
-
+      std::format("ERROR! Address {} is bigger than 32 bits addres space\n", address)
+    );
+  }
   this->mem[address] = value;
 }
 
 auto CPU::writeMemoryBlock(u64 address, const std::span<u8> value) -> void {
-  std::cout << "address " << address << '\n';
-  std::cout << "max address " << this->max_size << '\n';
-  std::cout << "hex " << std::hex << value.data() << '\n';
   u64 end = static_cast<u32>(address) + static_cast<u32>(value.size()) - 1;
   if (end > this->max_size - 1) {
     throw std::runtime_error(
-        "ERROR! Address is bigger than 2^32 bits address space\n");
+      std::format("ERROR! Address {} is bigger than 32 bits addres space\n", end)
+    );
   }
 
   for (const auto &content : value) {

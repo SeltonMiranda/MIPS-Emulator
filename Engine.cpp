@@ -6,13 +6,13 @@
 
 namespace Emulator {
 
-static const std::unordered_map<std::string, u8> functMap {
+static const std::unordered_map<std::string_view, u8> functMap {
     {"add", 0x20}, {"sub", 0x22},  {"and", 0x24}, {"or", 0x25},
     {"nor", 0x27},  {"sll", 0x00}, {"srl", 0x02}, {"slt", 0x2A},
     {"jr" , 0x08},
 };
 
-static const std::unordered_map<std::string, u8> opcodeMap {
+static const std::unordered_map<std::string_view, u8> opcodeMap {
     {"addi", 0x08},
     {"andi", 0x0C},
     {"ori" , 0x0D},
@@ -24,7 +24,7 @@ static const std::unordered_map<std::string, u8> opcodeMap {
     {"sw"  , 0x2b},
 };
 
-static const std::unordered_map<std::string, u8> jumpMap {
+static const std::unordered_map<std::string_view, u8> jumpMap {
   {"j"  , 0x02},
   {"jal", 0x03},
 };
@@ -110,7 +110,7 @@ auto Engine::assembleInstruction(u8* program, const Token& token, u64 address) -
     std::string err{std::format("Mnemonic {} not found\n", token.value)};
     throw std::runtime_error(err);
   } 
-  std::cout << "binary " << std::bitset<32>(bin) << '\n';
+
   for (size_t i = 0; i < 4; i++) {
       program[address + i] = static_cast<u8>((bin >> i * 8) & 0xFF);
   }

@@ -102,7 +102,7 @@ auto Tokenizer::parseArgs(const VecString& args) -> VecU64 {
   return parsedArgs;
 }
 
-static const std::unordered_map<std::string, u8> mnemonicArgsSizeMap = {
+static const std::unordered_map<std::string_view, u8> mnemonicArgsSizeMap = {
   {"addi", 3},
   {"andi", 3},
   {"ori", 3},
@@ -135,7 +135,7 @@ auto Tokenizer::validateArgumentsSize(const std::string& mnemonic, const VecStri
   return args.size() == it->second;
 }
 
-static const std::unordered_map<std::string, u64> fixedRegisters = {
+static const std::unordered_map<std::string_view, u64> fixedRegisters = {
     {"zero", 0},
     {"v0", 2},
     {"v1", 3},
