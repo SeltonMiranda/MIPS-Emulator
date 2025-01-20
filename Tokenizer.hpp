@@ -5,7 +5,7 @@
 
 namespace Emulator {
 
-enum class Type { INSTRUCTION, SYS_CALL, LABEL };
+enum class Type { INSTRUCTION, SYS_CALL, LABEL, LITERAL };
 
 struct Token {
   Type tokenType;
@@ -25,7 +25,9 @@ public:
   auto parseLabel(std::string& symbol, u64 address) -> void;
   auto parseSysCall(std::string& symbol, u64 address) -> void;
   auto parseInstruction(VecString& symbols, u64 address, std::unordered_map<u64, VecString>& _args) -> void;
+  auto parseDataDirective(std::string& line, u64& address) -> void;
 
+  auto isNumber(const char& c) -> bool;
   auto isSysCall(const std::string& call) -> bool;
   auto isLabel(const std::string& label) -> bool; 
   auto parseArgs(const VecString& args) -> VecU64;

@@ -18,9 +18,36 @@ auto main(int argc, char *argv[]) -> int {
   Emulator::Engine engine(tokenizer, cpu);
 
   try {
-    auto [code, size] = engine.assembler(program);
-    engine.run(std::span<u8>(code, size));
-    delete[] code;
+    engine.tokenizer.parse(program);
+
+    for (const auto& token : engine.tokenizer.tokens) {
+      std::string type{""};
+      switch (token.tokenType) {
+        case Emulator::Type::LITERAL:
+          type = "LITERAL";
+        break;
+
+        case Emulator::Type::INSTRUCTION:
+          type = "INSTRUCTION";
+        break;
+
+        case Emulator::Type::SYS_CALL:
+          type = "SYS_CALL";
+        break;
+
+        case Emulator::Type::LABEL:
+          type = "LABEL";
+        break;
+      }
+      std::cout << std::format("token\n address {}, type {}, value ``{}``, args\n", token.address, type, token.value);
+      for (const auto& arg : token.args) {
+        std::cout << std::format("\t arg ``{}``\n", arg);
+      }
+      std::cout << "----------------------------------------------------\n";
+    }
+    //auto [code, size] = engine.assembler(program);
+    //engine.run(std::span<u8>(code, size));
+    //delete[] code;
   } catch (const std::exception& e) {
     std::cout << e.what();
   }

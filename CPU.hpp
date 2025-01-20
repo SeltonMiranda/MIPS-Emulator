@@ -6,7 +6,7 @@
 namespace Emulator {
 
 class CPU {
-private:
+public:
   struct Instruction { 
     u64 address;
     u32 opcode;
@@ -24,7 +24,6 @@ private:
   u32 pc;
   bool halt;
 
-public:
   CPU();
   ~CPU() = default;
 

@@ -45,6 +45,33 @@ auto Tokenizer::parseInstruction(VecString& symbols, u64 address, std::unordered
   _args[address] = args;
 }
 
+auto Tokenizer::parseDataDirective(std::string& line, u64& address) -> void {
+  VecString symbols;
+  boost::split(symbols, line, boost::is_any_of(": "), boost::token_compress_on);
+
+  if (symbols.size() < 3 || symbols[1] != ".word") {
+    throw std::runtime_error(
+      std::format("Invalid literal declaration: {}", line)
+    );
+  }
+
+  Token literalToken;
+  literalToken.tokenType = Type::LITERAL;
+  literalToken.address = address;
+  literalToken.value = symbols[0];
+
+  u8 numLiterals = 0;
+  for (size_t i = 2; i < symbols.size(); i++) {
+    literalToken.args.push_back(std::stoull(symbols[i]));
+    numLiterals++;
+  }
+
+  this->tokens.push_back(literalToken);
+  this->labelsToAddress[literalToken.value] = address;
+  address += 4 * numLiterals;
+}
+
+
 auto Tokenizer::parse(const std::string& file) -> void {
   std::ifstream _file{file};
 
@@ -55,28 +82,58 @@ auto Tokenizer::parse(const std::string& file) -> void {
   }
 
   std::string line;
+  std::string section;
   u64 address = 0;
   std::unordered_map<u64, VecString> _args;
 
   while (std::getline(_file, line)) {
     VecString symbols;
     boost::trim(line);
+    boost::algorithm::to_lower(line);
+    
     if (line.empty() || line.starts_with('#')) {
       continue;
     }
 
-    boost::algorithm::to_lower(line);
-    boost::split(symbols, line, boost::is_any_of(", "), boost::token_compress_on);
-    if (this->isLabel(symbols[0])) {
-      this->parseLabel(symbols[0], address);
-    } else if (this->isSysCall(symbols[0])) {
-      this->parseSysCall(symbols[0], address);
-      address += 4;
+    if (line == ".data") {
+      section = ".data";
+      std::getline(_file, line);
+    } else if (line == ".text") {
+      section = ".text";
+      std::getline(_file, line);
+    }
+
+    if (section == ".data") {
+      this->parseDataDirective(line, address);
+    } else if (section == ".text") {
+      boost::trim(line);
+      boost::algorithm::to_lower(line);
+      boost::split(symbols, line, boost::is_any_of(", "), boost::token_compress_on);
+
+      // debug
+      //for (auto& symbol : symbols) {
+      //  std::cout << std::format("symbol {} \n", symbol);
+      //}
+
+      if (this->isLabel(symbols[0])) {
+        this->parseLabel(symbols[0], address);
+      } else if (this->isSysCall(symbols[0])) {
+        this->parseSysCall(symbols[0], address);
+        address += 4;
+      } else {
+        this->parseInstruction(symbols, address, _args);
+        address += 4;
+      }
+
     } else {
-      this->parseInstruction(symbols, address, _args);
-      address += 4;
+      throw std::runtime_error("ERROR! Directive not found\n");
     }
   }
+
+  //debug 
+  //for (const auto& [key, value] : this->labelsToAddress) {
+  //  std::cout << std::format("key {} value {}\n", key, value);
+  //}
 
   for (auto& token : this->tokens) {  
     if (token.tokenType == Type::INSTRUCTION) {
@@ -87,12 +144,16 @@ auto Tokenizer::parse(const std::string& file) -> void {
   _file.close();
 }
 
+auto Tokenizer::isNumber(const char& c) -> bool {
+  return (0x30 <= c && c <= 0x39) || c == '-';
+}
+
 auto Tokenizer::parseArgs(const VecString& args) -> VecU64 {
   VecU64 parsedArgs;
   for (const auto& arg: args) {
     if (this->labelsToAddress.contains(arg)) {
       parsedArgs.push_back(this->labelsToAddress[arg]);
-    } else if ((0x30 <= arg.front() && arg.front() <= 0x39) || arg.front() == '-') {
+    } else if (this->isNumber(arg.front())) {
       parsedArgs.push_back(static_cast<u64>(std::stoi(arg)));
     } else {
       parsedArgs.push_back(this->parseRegister(arg.data()));
