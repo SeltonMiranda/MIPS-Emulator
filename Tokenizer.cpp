@@ -109,7 +109,7 @@ auto Tokenizer::parse(const std::string& file) -> void {
     }
 
     // debug
-    std::cout << std::format("line {} : {}\n", i++, line);
+    //std::cout << std::format("line {} : {}\n", i++, line);
 
     if (section == ".data") {
       this->parseDataSection(line, address);

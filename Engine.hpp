@@ -10,8 +10,8 @@ public:
   Tokenizer& tokenizer;
   CPU& cpu;
 
-  auto assembleSysCall(u8* program, const Token& token, u64 address) -> void;
-  auto assembleInstruction(u8* program, const Token& token, u64 address) -> void;
+  auto assembleSysCall(u8* program, const Token& token, u64& address) -> void;
+  auto assembleInstruction(u8* program, const Token& token, u64& address) -> void;
   auto assembleLiteral(u8* program, const Token& token, u64& address) -> void;
 
   Engine() = default;
@@ -19,6 +19,7 @@ public:
 
   auto run(const std::span<u8>& code) -> void;
   auto assembler(const std::string& file) -> std::tuple<u8*, size_t>;
+  auto setCPUstartAddress() -> void;
   auto printContentFromAllRegisters() -> void;
   auto setContentToAllRegisters() -> void;
 };

@@ -193,16 +193,9 @@ auto CPU::executeImm(Instruction i) -> void {
       break;
 
     case 0x2b:
-      std::cout << std::format("index rt : {}, index rs {}\n", i.rt, i.rs);
       for (u8 i = 0; i < 4; i++) {
         valueToStore[i] = static_cast<u8>((rsContent >> i * 8) & 0xFF);
       }
-
-      for (size_t i = 0 ; i < 4; i++) {
-        std::cout << std::format("value {} : {}", i, valueToStore[i]); 
-      }
-      std::cout << '\n';
-
       this->writeMemoryBlock(
         rtContent + this->immExt(i.imm),
         std::span<u8>(valueToStore, 4)

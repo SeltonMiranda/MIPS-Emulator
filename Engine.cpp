@@ -30,7 +30,7 @@ static const std::unordered_map<std::string_view, u8> jumpMap {
 };
 
 
-auto Engine::assembleInstruction(u8* program, const Token& token, u64 address) -> void {
+auto Engine::assembleInstruction(u8* program, const Token& token, u64& address) -> void {
   u32 bin = 0;
   if (functMap.contains(token.value)) {
     u8 rs, rt, rd, shamt, funct;
@@ -114,9 +114,10 @@ auto Engine::assembleInstruction(u8* program, const Token& token, u64 address) -
   for (size_t i = 0; i < 4; i++) {
       program[address + i] = static_cast<u8>((bin >> i * 8) & 0xFF);
   }
+  address += 4;
 }
 
-auto Engine::assembleSysCall(u8* program, const Token& token, u64 address)
+auto Engine::assembleSysCall(u8* program, const Token& token, u64& address)
     -> void {
   u32 bin = 0;
   // An ebreak is a R-type instruction with all
@@ -129,19 +130,19 @@ auto Engine::assembleSysCall(u8* program, const Token& token, u64 address)
   for (size_t i = 0; i < 4; i++) {
     program[address + i] = static_cast<u8>((bin >> i * 8) & 0xFF);
   }
+
+  address += 4;
 }
 
 auto Engine::assembleLiteral(u8* program, const Token& token, u64& address) -> void {
   if (token.directive == Directive::WORD) {
     for (u8 i = 0; i < token.args.size(); i++) {
-
       u32 bin = static_cast<u32>(token.args[i]);
       for (u8 i = 0; i < 4; i++) {
         program[address + i] = static_cast<u8>((bin >> i * 8) & 0xFF);
       }
       address += 4;
     }
-    std::cout << "finished\n";
   } else {
     throw std::invalid_argument("Not implemented yet\n");
   }
@@ -171,10 +172,8 @@ auto Engine::assembler(const std::string& file) -> std::tuple<u8*, size_t> {
   for (const auto& token : this->tokenizer.tokens) {
     if (token.tokenType == Type::INSTRUCTION) {
       this->assembleInstruction(program, token, address);
-      address += 4;
     } else if (token.tokenType == Type::SYS_CALL) {
       this->assembleSysCall(program, token, address);
-      address += 4;
     } else if (token.tokenType == Type::LITERAL) {
       this->assembleLiteral(program, token, address);
     } else {
@@ -185,16 +184,20 @@ auto Engine::assembler(const std::string& file) -> std::tuple<u8*, size_t> {
   }
 
   //debug
-  for (u64 i = 0; i < length; i++) {
-    std::cout << std::format("bin[{}] ", i) << std::bitset<8>(program[i]) << '\n';
-  }
+  //for (u64 i = 0; i < length; i++) {
+  //  std::cout << std::format("bin[{}] ", i) << std::bitset<8>(program[i]) << '\n';
+  //}
 
   return {program, length};
 }
 
+auto Engine::setCPUstartAddress() -> void {
+  cpu.pc = tokenizer.textStartAddress;
+}
+
 auto Engine::run(const std::span<u8>& code) -> void {
   this->cpu.loadProgram(code);
-  this->cpu.pc = this->tokenizer.textStartAddress;
+  this->setCPUstartAddress();
 
   this->printContentFromAllRegisters(); // Debug
 
@@ -203,8 +206,6 @@ auto Engine::run(const std::span<u8>& code) -> void {
 
   std::cout << "--------------------------------------\n"; // Debug
   this->printContentFromAllRegisters();                    // Debug
-
-  //this->cpu.dumpMemory(code.size());
 }
 
 auto Engine::printContentFromAllRegisters() -> void {
