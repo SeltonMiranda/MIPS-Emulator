@@ -12,6 +12,7 @@ public:
 
   auto assembleSysCall(u8* program, const Token& token, u64 address) -> void;
   auto assembleInstruction(u8* program, const Token& token, u64 address) -> void;
+  auto assembleLiteral(u8* program, const Token& token, u64& address) -> void;
 
   Engine() = default;
   Engine(Tokenizer& tokenizer, CPU& cpu) : tokenizer{tokenizer}, cpu{cpu} {};

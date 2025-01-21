@@ -1,4 +1,5 @@
 #include "Tokenizer.hpp"
+#include "debugHelper.hpp"
 
 namespace Emulator {
 
@@ -45,7 +46,7 @@ auto Tokenizer::parseInstruction(VecString& symbols, u64 address, std::unordered
   _args[address] = args;
 }
 
-auto Tokenizer::parseDataDirective(std::string& line, u64& address) -> void {
+auto Tokenizer::parseDataSection(std::string& line, u64& address) -> void {
   VecString symbols;
   boost::split(symbols, line, boost::is_any_of(": "), boost::token_compress_on);
 
@@ -56,19 +57,21 @@ auto Tokenizer::parseDataDirective(std::string& line, u64& address) -> void {
   }
 
   Token literalToken;
+  literalToken.directive = Directive::WORD;
   literalToken.tokenType = Type::LITERAL;
   literalToken.address = address;
   literalToken.value = symbols[0];
 
-  u8 numLiterals = 0;
+  u8 numLiteral = 0;
   for (size_t i = 2; i < symbols.size(); i++) {
-    literalToken.args.push_back(std::stoull(symbols[i]));
-    numLiterals++;
+    u32 arg = std::stoi(symbols[i]);
+    literalToken.args.push_back(std::stoi(symbols[i]));
+    numLiteral++;
   }
 
   this->tokens.push_back(literalToken);
   this->labelsToAddress[literalToken.value] = address;
-  address += 4 * numLiterals;
+  address += 4 * numLiteral;
 }
 
 
@@ -85,6 +88,7 @@ auto Tokenizer::parse(const std::string& file) -> void {
   std::string section;
   u64 address = 0;
   std::unordered_map<u64, VecString> _args;
+  int i = 0;
 
   while (std::getline(_file, line)) {
     VecString symbols;
@@ -97,23 +101,20 @@ auto Tokenizer::parse(const std::string& file) -> void {
 
     if (line == ".data") {
       section = ".data";
-      std::getline(_file, line);
+      continue;
     } else if (line == ".text") {
       section = ".text";
-      std::getline(_file, line);
+      this->textStartAddress = address;
+      continue;
     }
 
-    if (section == ".data") {
-      this->parseDataDirective(line, address);
-    } else if (section == ".text") {
-      boost::trim(line);
-      boost::algorithm::to_lower(line);
-      boost::split(symbols, line, boost::is_any_of(", "), boost::token_compress_on);
+    // debug
+    std::cout << std::format("line {} : {}\n", i++, line);
 
-      // debug
-      //for (auto& symbol : symbols) {
-      //  std::cout << std::format("symbol {} \n", symbol);
-      //}
+    if (section == ".data") {
+      this->parseDataSection(line, address);
+    } else if (section == ".text") {
+      boost::split(symbols, line, boost::is_any_of(", "), boost::token_compress_on);
 
       if (this->isLabel(symbols[0])) {
         this->parseLabel(symbols[0], address);
@@ -129,11 +130,6 @@ auto Tokenizer::parse(const std::string& file) -> void {
       throw std::runtime_error("ERROR! Directive not found\n");
     }
   }
-
-  //debug 
-  //for (const auto& [key, value] : this->labelsToAddress) {
-  //  std::cout << std::format("key {} value {}\n", key, value);
-  //}
 
   for (auto& token : this->tokens) {  
     if (token.tokenType == Type::INSTRUCTION) {
@@ -230,6 +226,31 @@ auto Tokenizer::parseRegister(const char *arg) -> u64 {
     return number;
   default:
     throw std::invalid_argument(std::format("ERROR! No such a register {}\n", arg));
+  }
+}
+
+auto Tokenizer::printTokens() -> void {
+      for (const auto& token : tokens) {
+    std::string type{""};
+    switch (token.tokenType) {
+      case Emulator::Type::LITERAL:
+        type = "LITERAL";
+      break;
+      case Emulator::Type::INSTRUCTION:
+        type = "INSTRUCTION";
+      break;
+      case Emulator::Type::SYS_CALL:
+        type = "SYS_CALL";
+      break;
+      case Emulator::Type::LABEL:
+        type = "LABEL";
+      break;
+    }
+    std::cout << std::format("token\n address {}, type {}, value ``{}``, args\n", token.address, type, token.value);
+    for (const auto& arg : token.args) {
+      std::cout << std::format("\t arg ``{}``\n", arg);
+    }
+    std::cout << "----------------------------------------------------\n";
   }
 }
 

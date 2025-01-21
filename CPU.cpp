@@ -301,10 +301,13 @@ auto CPU::execute(u32 instruction) -> void {
 }
 
 auto CPU::dumpMemory(size_t size) -> void {
-  for (size_t i = 0; i < 68; i += 4) {
+  u64 address = 0;
+  for (size_t i = 0; i < 100; i += 4) {
      u32 instruction{u32((this->mem[i] <<  0)) | u32((this->mem[i + 1] <<  8)) |
                   u32((this->mem[i + 2] << 16)) | u32((this->mem[i + 3] << 24))};
+    std::cout << std::format("address {} -> ", address);
     std::cout << std::showbase << std::hex << instruction << '\n';
+    address += 4;
   }
 }
 
