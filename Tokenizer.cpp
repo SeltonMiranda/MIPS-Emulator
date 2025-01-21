@@ -50,28 +50,40 @@ auto Tokenizer::parseDataSection(std::string& line, u64& address) -> void {
   VecString symbols;
   boost::split(symbols, line, boost::is_any_of(": "), boost::token_compress_on);
 
-  if (symbols.size() < 3 || symbols[1] != ".word") {
+  if (symbols.size() < 3) {
     throw std::runtime_error(
       std::format("Invalid literal declaration: {}", line)
     );
   }
 
-  Token literalToken;
-  literalToken.directive = Directive::WORD;
-  literalToken.tokenType = Type::LITERAL;
-  literalToken.address = address;
-  literalToken.value = symbols[0];
+  if (symbols[1] == ".word") {
+    Token literalToken;
+    literalToken.directive = Directive::WORD;
+    literalToken.tokenType = Type::LITERAL;
+    literalToken.address = address;
+    literalToken.value = symbols[0];
 
-  u8 numLiteral = 0;
-  for (size_t i = 2; i < symbols.size(); i++) {
-    u32 arg = std::stoi(symbols[i]);
-    literalToken.args.push_back(std::stoi(symbols[i]));
-    numLiteral++;
+    u8 numLiteral = 0;
+    for (size_t i = 2; i < symbols.size(); i++) {
+      literalToken.args.push_back(std::stoi(symbols[i]));
+      numLiteral++;
+    }
+
+    this->tokens.push_back(literalToken);
+    this->labelsToAddress[literalToken.value] = address;
+    address += 4 * numLiteral;
+  } else if (symbols[1] == ".space") {
+    Token literalToken;
+    literalToken.directive = Directive::SPACE;
+    literalToken.tokenType = Type::LITERAL;
+    literalToken.address = address;
+    literalToken.value = symbols[0];
+    literalToken.args.push_back(std::stoi(symbols[2]));
+
+    this->tokens.push_back(literalToken);
+    this->labelsToAddress[literalToken.value] = address;
+    address += literalToken.args.front();
   }
-
-  this->tokens.push_back(literalToken);
-  this->labelsToAddress[literalToken.value] = address;
-  address += 4 * numLiteral;
 }
 
 
@@ -88,7 +100,7 @@ auto Tokenizer::parse(const std::string& file) -> void {
   std::string section;
   u64 address = 0;
   std::unordered_map<u64, VecString> _args;
-  int i = 0;
+  // int i = 0; debug
 
   while (std::getline(_file, line)) {
     VecString symbols;
@@ -136,6 +148,12 @@ auto Tokenizer::parse(const std::string& file) -> void {
       token.args = this->parseArgs(_args[token.address]);
     }
   }
+
+
+  // debug
+  //printTokens();
+  //std::cout << std::format("text start address -> {}\n", textStartAddress);
+  //debug
   
   _file.close();
 }

@@ -143,6 +143,8 @@ auto Engine::assembleLiteral(u8* program, const Token& token, u64& address) -> v
       }
       address += 4;
     }
+  } else if (token.directive == Directive::SPACE) {
+    address += token.args.front();
   } else {
     throw std::invalid_argument("Not implemented yet\n");
   }
@@ -161,6 +163,8 @@ auto Engine::assembler(const std::string& file) -> std::tuple<u8*, size_t> {
     } else if (token.tokenType == Type::LITERAL) {
       if (token.directive == Directive::WORD) {
         length += 4 * token.args.size();
+      } else if (token.directive == Directive::SPACE) {
+        length += token.args.front();
       }
     } else {
       throw std::runtime_error("Invalid token type");
@@ -211,7 +215,7 @@ auto Engine::run(const std::span<u8>& code) -> void {
 auto Engine::printContentFromAllRegisters() -> void {
   for (uint32_t i = 0; i < 32; i++) {
     std::cout << std::format("Content from register {} = {}\n", i,
-                             this->cpu.readRegister(i));
+                             static_cast<s32>(this->cpu.readRegister(i)));
   }
 }
 

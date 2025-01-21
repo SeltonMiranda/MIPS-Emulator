@@ -18,7 +18,7 @@ public:
     s16 imm;
   };
 
-  std::array<s32, 32> registers;
+  std::array<u32, 32> registers;
   u8* mem;
   u32 max_size;
   u32 pc;
@@ -62,7 +62,7 @@ public:
   auto execute(u32 instruction) -> void;
 
   // Reads the value from a register
-  auto readRegister(u32 index) -> s32;
+  auto readRegister(u32 index) -> u32;
 
   // Writes value into a register
   auto writeRegister(u32 index, s32 value) -> void;

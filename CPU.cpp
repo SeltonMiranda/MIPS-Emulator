@@ -78,7 +78,7 @@ auto CPU::writeRegister(u32 index, s32 value) -> void {
   this->registers[index] = value;
 }
 
-auto CPU::readRegister(u32 index) -> s32 {
+auto CPU::readRegister(u32 index) -> u32 {
   return this->registers[index];
 }
 
@@ -138,9 +138,9 @@ auto CPU::executeJ(Instruction i) -> void {
 }
 
 auto CPU::executeImm(Instruction i) -> void {
-  s32 rsContent = this->readRegister(i.rs);
-  s32 rtContent = this->readRegister(i.rt);
-  s32 valueToWrite;
+  u32 rsContent = this->readRegister(i.rs);
+  u32 rtContent = this->readRegister(i.rt);
+  u32 valueToWrite;
   u8 valueToStore[4];
 
   switch (i.opcode) {
@@ -207,9 +207,9 @@ auto CPU::executeImm(Instruction i) -> void {
 }
 
 auto CPU::executeR(Instruction i) -> void {
-  s32 rsContent{this->readRegister(i.rs)};
-  s32 rtContent{this->readRegister(i.rt)};
-  s32 valueToWrite = 0;
+  u32 rsContent{this->readRegister(i.rs)};
+  u32 rtContent{this->readRegister(i.rt)};
+  u32 valueToWrite = 0;
 
   switch (i.funct) {
 

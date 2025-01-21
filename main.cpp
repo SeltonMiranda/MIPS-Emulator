@@ -20,7 +20,7 @@ auto main(int argc, char *argv[]) -> int {
   Emulator::Engine engine(tokenizer, cpu);
 
   try {
-
+    
     auto [code, size] = engine.assembler(program);
     engine.run(std::span<u8>(code, size));
     delete[] code;
