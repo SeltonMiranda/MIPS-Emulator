@@ -31,6 +31,7 @@ public:
   auto parseInstruction(VecString& symbols, u64 address, std::unordered_map<u64, VecString>& _args) -> void;
   auto parseDataSection(std::string& line, u64& address) -> void;
 
+  auto removeInlineComments(std::string& line) -> void;
   auto isNumber(const char& c) -> bool;
   auto isSysCall(const std::string& call) -> bool;
   auto isLabel(const std::string& label) -> bool; 

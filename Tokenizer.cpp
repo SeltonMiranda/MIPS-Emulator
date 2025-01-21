@@ -109,6 +109,8 @@ auto Tokenizer::parse(const std::string& file) -> void {
     
     if (line.empty() || line.starts_with('#')) {
       continue;
+    } else {
+      this->removeInlineComments(line);
     }
 
     if (line == ".data") {
@@ -154,8 +156,16 @@ auto Tokenizer::parse(const std::string& file) -> void {
   //printTokens();
   //std::cout << std::format("text start address -> {}\n", textStartAddress);
   //debug
-  
+
   _file.close();
+}
+
+auto Tokenizer::removeInlineComments(std::string& line) -> void {
+  size_t commentPos = line.find('#');
+  if (commentPos != std::string::npos) {
+    line = line.substr(0, commentPos);
+  }
+  line.erase(line.find_last_not_of(" \t") + 1);
 }
 
 auto Tokenizer::isNumber(const char& c) -> bool {
