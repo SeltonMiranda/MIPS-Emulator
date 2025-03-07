@@ -124,6 +124,8 @@ auto Engine::assembleSysCall(u8* program, const Token& token, u64& address)
   // fields filled with zeroes except funct
   if (token.value == "ebreak") {
     bin |= (0x0D & 0x3F); // funct for ebreak is 0x0D
+  } else {
+    throw std::runtime_error{std::format("Mnemonic {} not found\n", token.value)};
   }
 
   // inserts it to program code
