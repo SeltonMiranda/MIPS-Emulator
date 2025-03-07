@@ -3,8 +3,21 @@
 
 namespace Emulator {
 
+static constexpr u64 WORD_SIZE = 4;
+
+static constexpr std::array<std::string_view, 8> syscallsNames = {
+  "print_int",
+  "read_int",
+  "print_string",
+  "read_string",
+  "print_char",
+  "read_char",
+  "exit",
+  "exit2"
+};
+
 auto Tokenizer::isSysCall(const std::string& call) -> bool {
-  return call == "ebreak";
+  return std::find(syscallsNames.begin(), syscallsNames.end(), call) != syscallsNames.end();
 }
 
 auto Tokenizer::isLabel(const std::string& label) -> bool {
@@ -42,7 +55,6 @@ auto Tokenizer::parseInstruction(VecString& symbols, u64 address, std::unordered
   }
 
   this->tokens.push_back(instructionToken);
-
   _args[address] = args;
 }
 
@@ -57,32 +69,39 @@ auto Tokenizer::parseDataSection(std::string& line, u64& address) -> void {
   }
 
   if (symbols[1] == ".word") {
-    Token literalToken;
-    literalToken.directive = Directive::WORD;
-    literalToken.tokenType = Type::LITERAL;
-    literalToken.address = address;
-    literalToken.value = symbols[0];
 
-    u8 numLiteral = 0;
+    Token literalToken = {
+      .tokenType = Type::LITERAL,
+      .address = address,
+      .value = symbols[0],
+      .directive = Directive::WORD,
+    };
+
+    u8 numberOfLiterals = 0;
     for (size_t i = 2; i < symbols.size(); i++) {
       literalToken.args.push_back(std::stoi(symbols[i]));
-      numLiteral++;
+      numberOfLiterals++;
     }
-
     this->tokens.push_back(literalToken);
     this->labelsToAddress[literalToken.value] = address;
-    address += 4 * numLiteral;
+
+    address += WORD_SIZE * numberOfLiterals;
+
   } else if (symbols[1] == ".space") {
-    Token literalToken;
-    literalToken.directive = Directive::SPACE;
-    literalToken.tokenType = Type::LITERAL;
-    literalToken.address = address;
-    literalToken.value = symbols[0];
-    literalToken.args.push_back(std::stoi(symbols[2]));
 
+    Token literalToken = {
+      .tokenType = Type::LITERAL,
+      .address = address,
+      .value = symbols[0],
+      .directive = Directive::SPACE,
+    };
+
+    literalToken.args.push_back(std::stoi(symbols[2]));
     this->tokens.push_back(literalToken);
     this->labelsToAddress[literalToken.value] = address;
+
     address += literalToken.args.front();
+
   }
 }
 

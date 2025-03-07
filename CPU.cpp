@@ -250,7 +250,7 @@ auto CPU::executeR(Instruction i) -> void {
     valueToWrite =  (rsContent < rtContent) ? 1 : 0;
     break;
 
-  case 0x0D: // ebreak
+  case 0x0C: // ebreak
     this->halt = true;
     break;
   }

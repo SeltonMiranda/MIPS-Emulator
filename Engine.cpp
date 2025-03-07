@@ -122,10 +122,10 @@ auto Engine::assembleSysCall(u8* program, const Token& token, u64& address)
   u32 bin = 0;
   // An ebreak is a R-type instruction with all
   // fields filled with zeroes except funct
-  if (token.value == "ebreak") {
-    bin |= (0x0D & 0x3F); // funct for ebreak is 0x0D
+  if (token.value == "exit2") {
+    bin |= (0x0C & 0x3F); // funct for ebreak is 0x0D
   } else {
-    throw std::runtime_error{std::format("Mnemonic {} not found\n", token.value)};
+    throw std::runtime_error{std::format("Mnemonic {} doesn't exist\n", token.value)};
   }
 
   // inserts it to program code
