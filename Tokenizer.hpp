@@ -7,7 +7,7 @@ namespace Emulator {
 
 enum class Type { INSTRUCTION, SYS_CALL, LABEL, LITERAL };
 
-enum class Directive { WORD, SPACE };
+enum class Directive { WORD, SPACE, ASCIIZ };
 
 struct Token {
   Type tokenType;

@@ -6,13 +6,30 @@
 
 namespace Emulator {
 
-static const std::unordered_map<std::string_view, u8> functMap {
-    {"add", 0x20}, {"sub", 0x22},  {"and", 0x24}, {"or", 0x25},
-    {"nor", 0x27},  {"sll", 0x00}, {"srl", 0x02}, {"slt", 0x2A},
+static constexpr std::array<std::string_view, 8> syscallsNames = {
+  "print_int",
+  "read_int",
+  "print_string",
+  "read_string",
+  "print_char",
+  "read_char",
+  "exit",
+  "exit2"
+};
+
+static const std::unordered_map<std::string_view, u8> functMap = {
+    {"add", 0x20},
+    {"sub", 0x22}, 
+    {"and", 0x24}, 
+    {"or" , 0x25},
+    {"nor", 0x27}, 
+    {"sll", 0x00}, 
+    {"srl", 0x02}, 
+    {"slt", 0x2A},
     {"jr" , 0x08},
 };
 
-static const std::unordered_map<std::string_view, u8> opcodeMap {
+static const std::unordered_map<std::string_view, u8> opcodeMap = {
     {"addi", 0x08},
     {"andi", 0x0C},
     {"ori" , 0x0D},
@@ -24,7 +41,7 @@ static const std::unordered_map<std::string_view, u8> opcodeMap {
     {"sw"  , 0x2b},
 };
 
-static const std::unordered_map<std::string_view, u8> jumpMap {
+static const std::unordered_map<std::string_view, u8> jumpMap = {
   {"j"  , 0x02},
   {"jal", 0x03},
 };
@@ -120,24 +137,21 @@ auto Engine::assembleInstruction(u8* program, const Token& token, u64& address) 
 auto Engine::assembleSysCall(u8* program, const Token& token, u64& address)
     -> void {
   u32 bin = 0;
-  // An ebreak is a R-type instruction with all
-  // fields filled with zeroes except funct
-  if (token.value == "exit2") {
-    bin |= (0x0C & 0x3F); // funct for ebreak is 0x0D
+  if (token.value == "syscall") {
+    bin |= (0x0C & 0x3F); // funct for an syscall is 0x0C
   } else {
     throw std::runtime_error{std::format("Mnemonic {} doesn't exist\n", token.value)};
   }
 
-  // inserts it to program code
   for (size_t i = 0; i < 4; i++) {
     program[address + i] = static_cast<u8>((bin >> i * 8) & 0xFF);
   }
-
   address += 4;
 }
 
 auto Engine::assembleLiteral(u8* program, const Token& token, u64& address) -> void {
   if (token.directive == Directive::WORD) {
+
     for (u8 i = 0; i < token.args.size(); i++) {
       u32 bin = static_cast<u32>(token.args[i]);
       for (u8 i = 0; i < 4; i++) {
@@ -145,8 +159,18 @@ auto Engine::assembleLiteral(u8* program, const Token& token, u64& address) -> v
       }
       address += 4;
     }
+
   } else if (token.directive == Directive::SPACE) {
+
     address += token.args.front();
+
+  } else if (token.directive == Directive::ASCIIZ) {
+
+    for (u32 i = 0; i < token.args.size(); i++) {
+      program[address] = static_cast<u8>(token.args.at(i));
+      address++;
+    }
+
   } else {
     throw std::invalid_argument("Not implemented yet\n");
   }
@@ -167,6 +191,8 @@ auto Engine::assembler(const std::string& file) -> std::tuple<u8*, size_t> {
         length += 4 * token.args.size();
       } else if (token.directive == Directive::SPACE) {
         length += token.args.front();
+      } else if (token.directive == Directive::ASCIIZ) {
+        length += token.args.size();
       }
     } else {
       throw std::runtime_error("Invalid token type");

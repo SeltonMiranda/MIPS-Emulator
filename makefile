@@ -1,4 +1,4 @@
-CPPFLAGS =-std=c++23 -Wall -pedantic -g0 -ffunction-sections -fdata-sections -Wl,--gc-sections -I/usr/include/boost
+CPPFLAGS =-std=c++23 -Wall -pedantic -g -ffunction-sections -fdata-sections -Wl,--gc-sections -I/usr/include/boost
 
 OBJECTS = build/main.o build/Tokenizer.o build/Engine.o build/CPU.o
 

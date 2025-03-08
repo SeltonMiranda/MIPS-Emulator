@@ -5,19 +5,8 @@ namespace Emulator {
 
 static constexpr u64 WORD_SIZE = 4;
 
-static constexpr std::array<std::string_view, 8> syscallsNames = {
-  "print_int",
-  "read_int",
-  "print_string",
-  "read_string",
-  "print_char",
-  "read_char",
-  "exit",
-  "exit2"
-};
-
 auto Tokenizer::isSysCall(const std::string& call) -> bool {
-  return std::find(syscallsNames.begin(), syscallsNames.end(), call) != syscallsNames.end();
+  return call == "syscall";
 }
 
 auto Tokenizer::isLabel(const std::string& label) -> bool {
@@ -45,6 +34,7 @@ auto Tokenizer::parseInstruction(VecString& symbols, u64 address, std::unordered
   
   std::vector<std::string> args;
   for (size_t i = 1; i < size(symbols); i++) {
+    boost::algorithm::to_lower(symbols[i]);
     args.push_back(symbols[i]);
   }
 
@@ -68,12 +58,12 @@ auto Tokenizer::parseDataSection(std::string& line, u64& address) -> void {
     );
   }
 
-  if (symbols[1] == ".word") {
+  if (symbols.at(1) == ".word") {
 
     Token literalToken = {
       .tokenType = Type::LITERAL,
       .address = address,
-      .value = symbols[0],
+      .value = symbols.at(0),
       .directive = Directive::WORD,
     };
 
@@ -87,12 +77,12 @@ auto Tokenizer::parseDataSection(std::string& line, u64& address) -> void {
 
     address += WORD_SIZE * numberOfLiterals;
 
-  } else if (symbols[1] == ".space") {
+  } else if (symbols.at(1) == ".space") {
 
     Token literalToken = {
       .tokenType = Type::LITERAL,
       .address = address,
-      .value = symbols[0],
+      .value = symbols.at(0),
       .directive = Directive::SPACE,
     };
 
@@ -102,6 +92,36 @@ auto Tokenizer::parseDataSection(std::string& line, u64& address) -> void {
 
     address += literalToken.args.front();
 
+  } else if (symbols.at(1) == ".asciiz") {
+
+    std::string strValue;
+    for (u32 i = 2; i < symbols.size(); i++) {
+      strValue.append(symbols.at(i));
+      strValue.append(" ");
+    }
+    std::erase_if(strValue, [](char c) { return c == '"'; });
+
+    Token literalToken = {
+      .tokenType = Type::LITERAL,
+      .address = address,
+      .value =  symbols.at(0),
+      .directive = Directive::ASCIIZ,
+    };
+
+    for (char c: strValue) {
+      literalToken.args.push_back(static_cast<u8>(c));
+    }
+    literalToken.args.push_back(0); // Null terminate string ('\0')
+
+    this->tokens.push_back(literalToken);
+    this->labelsToAddress[literalToken.value] = address;
+
+    address += literalToken.args.size();
+
+  } else {
+    throw std::runtime_error{
+                              std::format("ERROR! Directive {} doesn't exist\n", symbols.at(1))
+                            };
   }
 }
 
@@ -124,7 +144,7 @@ auto Tokenizer::parse(const std::string& file) -> void {
   while (std::getline(_file, line)) {
     VecString symbols;
     boost::trim(line);
-    boost::algorithm::to_lower(line);
+    //boost::algorithm::to_lower(line);
     
     if (line.empty() || line.starts_with('#')) {
       continue;
@@ -145,14 +165,18 @@ auto Tokenizer::parse(const std::string& file) -> void {
     //std::cout << std::format("line {} : {}\n", i++, line);
 
     if (section == ".data") {
-      this->parseDataSection(line, address);
-    } else if (section == ".text") {
-      boost::split(symbols, line, boost::is_any_of(", "), boost::token_compress_on);
 
-      if (this->isLabel(symbols[0])) {
-        this->parseLabel(symbols[0], address);
-      } else if (this->isSysCall(symbols[0])) {
-        this->parseSysCall(symbols[0], address);
+      this->parseDataSection(line, address);
+      
+    } else if (section == ".text") {
+
+      boost::split(symbols, line, boost::is_any_of(", "), boost::token_compress_on);
+      std::string tag = symbols[0];
+
+      if (this->isLabel(tag)) {
+        this->parseLabel(tag, address);
+      } else if (this->isSysCall(tag)) {
+        this->parseSysCall(tag, address);
         address += 4;
       } else {
         this->parseInstruction(symbols, address, _args);

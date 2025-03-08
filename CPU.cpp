@@ -206,6 +206,72 @@ auto CPU::executeImm(Instruction i) -> void {
   this->pc += 4;
 }
 
+auto CPU::executeSyscall() -> void {
+  u32 first_argument = this->registers[2]; // $v0
+  u32 second_argument; // $a0
+  u32 third_argument;  // $a1
+
+  switch (first_argument) {
+    case 1: { // print_int
+      second_argument = this->registers[4];
+      std::cout << static_cast<int>(second_argument);
+      return;
+    }
+
+    case 4: { // print_string
+      second_argument = this->registers[4];
+      char* str = reinterpret_cast<char*>(this->mem + second_argument);
+      std::cout << str;
+      return;
+    }
+
+    case 5: { // read_int
+      int input_int;
+      std::cin >> input_int;
+      this->registers[2] = static_cast<u32>(input_int);
+      return;
+    }
+
+    case 8: { // read_string
+      second_argument = this->registers[4];
+      third_argument = this->registers[5];
+      char* buffer = reinterpret_cast<char*>(this->mem + second_argument);
+      std::cin.getline(buffer, third_argument);
+      //this->writeMemoryBlock(second_argument, std::span(buffer, third_argument));
+      return;
+    }
+
+    case 10: { // exit
+      this->halt = true;
+      return;
+    }
+
+    case 11: { // print_char
+      second_argument = this->registers[4];
+      std::cout << static_cast<char>(second_argument);
+      return;
+    }
+
+    case 12: { // read_char
+      char input_char;
+      std::cin >> input_char;
+      this->registers[2] = static_cast<u32>(input_char);
+      return;
+    }
+
+    case 17: { // exit2
+      second_argument = this->registers[4];
+      this->halt = true;
+      return;
+    }
+
+    default: {
+      throw std::runtime_error{std::format("Wrong argument code in $v0: {}\n", first_argument)};
+    }
+  }
+}
+
+
 auto CPU::executeR(Instruction i) -> void {
   u32 rsContent{this->readRegister(i.rs)};
   u32 rtContent{this->readRegister(i.rt)};
@@ -215,46 +281,52 @@ auto CPU::executeR(Instruction i) -> void {
 
   case 0x00: // sll
     valueToWrite = rtContent << i.shamt;
+    this->writeRegister(i.rd, valueToWrite);
     break;
 
   case 0x02: // srl
     valueToWrite = rtContent >> i.shamt;
+    this->writeRegister(i.rd, valueToWrite);
     break;
 
   case 0x08: // jr
     this->pc = rsContent - 4;
     return;
-    break;
 
   case 0x20: // add
     valueToWrite = rsContent + rtContent;
+    this->writeRegister(i.rd, valueToWrite);
     break;
 
   case 0x22: // sub
     valueToWrite = rsContent - rtContent;
+    this->writeRegister(i.rd, valueToWrite);
     break;
 
   case 0x24: // and
     valueToWrite = rsContent & rtContent;
+    this->writeRegister(i.rd, valueToWrite);
     break;
 
   case 0x25: // or
     valueToWrite = rsContent | rtContent;
+    this->writeRegister(i.rd, valueToWrite);
     break;
 
   case 0x27: // nor
     valueToWrite = ~(rsContent | rtContent);
+    this->writeRegister(i.rd, valueToWrite);
     break;
 
   case 0x2A: // slt
     valueToWrite =  (rsContent < rtContent) ? 1 : 0;
+    this->writeRegister(i.rd, valueToWrite);
     break;
 
-  case 0x0C: // ebreak
-    this->halt = true;
+  case 0x0C: // Syscall
+    this->executeSyscall();
     break;
   }
-  this->writeRegister(i.rd, valueToWrite);
   this->pc += 4;
 }
 

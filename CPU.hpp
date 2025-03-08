@@ -58,6 +58,8 @@ public:
   // Executes an R-type instruction
   auto executeR(Instruction i) -> void;
 
+  auto executeSyscall() -> void;
+
   // Executes an instruction
   auto execute(u32 instruction) -> void;
 
