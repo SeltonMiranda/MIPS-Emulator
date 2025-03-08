@@ -7,6 +7,8 @@
 namespace Emulator {
 
 static constexpr u64 WORD_SIZE = 4;
+static constexpr std::string_view MOVE = "move";
+static constexpr std::string_view LI = "li";
 
 static const std::unordered_map<std::string_view, u8> functMap = {
     {"add", 0x20},
@@ -38,10 +40,45 @@ static const std::unordered_map<std::string_view, u8> jumpMap = {
   {"jal", 0x03},
 };
 
+auto Engine::isPseudoInstruction(const std::string& mnemonic) -> bool {
+  return mnemonic == MOVE || mnemonic == LI;
+}
+
+auto Engine::assemblePseudoInstruction(u8* program, const Token& token, u32& bin) -> void {
+
+  // "move" instruction turns into: "add $dest, $src, zero" to cpu
+  if (token.value == MOVE) {
+    u8 rd = static_cast<u8>(token.args.at(0)); // Destiny
+    u8 rs = static_cast<u8>(token.args.at(1)); // Source
+    u8 rt = 0; // zero
+
+    bin |= (rs    & 0x1F) << 21; // rs
+    bin |= (rt    & 0x1F) << 16; // rt ($zero)
+    bin |= (rd    & 0x1F) << 11; // rd
+    bin |= (0     & 0x1F) << 6;  // shamt = 0
+    bin |= (0x20  & 0x3F) << 0;  // funct = add (0x20)
+  } 
+  // "li" instruction turns into: "ori $dst, $src, zero" to cpu
+  // Note that this implementation only works for 16 bits immediate
+  // 32 bits immediate will eventually deal with it
+  else if (token.value == LI) {
+    u8 rt = static_cast<u8>(token.args.at(0)); //Destiny
+    s32 imm = static_cast<s32>(token.args.at(1)); // immediate
+
+    bin |= (0x0D & 0x3F) << 26; // opcode 
+    bin |= (0x00 & 0x1F) << 21; // rs (zero)
+    bin |= (rt   & 0x1F) << 16; // rt 
+    bin |= (imm  & 0xFFFF) << 0; // immediate
+  } else {
+    throw std::runtime_error{std::format("ERROR! Pseudo instruction {} doesn't exist\n", token.value)};
+  }
+}
 
 auto Engine::assembleInstruction(u8* program, const Token& token, u64& address) -> void {
   u32 bin = 0;
-  if (functMap.contains(token.value)) {
+  if (this->isPseudoInstruction(token.value)) {
+    this->assemblePseudoInstruction(program, token, bin);
+  } else if (functMap.contains(token.value)) {
     u8 rs, rt, rd, shamt, funct;
     rs = rt = 0;
     shamt = 0;
@@ -193,26 +230,30 @@ auto Engine::preComputeProgramLength() -> u64 {
   return length;
 }
 
-auto Engine::assembler(const std::string& file) -> std::tuple<u8*, size_t> {
-  this->tokenizer.parse(file);
-
+auto Engine::assemble(u8* program) -> void {
   u64 address = 0;
-  u64 length = this->preComputeProgramLength();
-  u8* program = new u8[length];
-  
+
   for (const auto& token : this->tokenizer.tokens) {
-    if (token.tokenType == Type::INSTRUCTION) {
+    if (token.tokenType == Type::INSTRUCTION)
       this->assembleInstruction(program, token, address);
-    } else if (token.tokenType == Type::SYS_CALL) {
+    else if (token.tokenType == Type::SYS_CALL)
       this->assembleSysCall(program, token, address);
-    } else if (token.tokenType == Type::LITERAL) {
+    else if (token.tokenType == Type::LITERAL)
       this->assembleLiteral(program, token, address);
-    } else {
+    else 
       throw std::runtime_error(
         std::format("Invalid token {}\n", token.value)
-      );
-    }
+      ); 
   }
+}
+
+auto Engine::assembler(const std::string& file) -> std::tuple<u8*, size_t> {
+
+  this->tokenizer.parse(file);
+  u64 length = this->preComputeProgramLength();
+  u8* program = new u8[length];
+  this->assemble(program); 
+
   return {program, length};
 }
 

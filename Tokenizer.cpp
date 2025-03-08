@@ -21,13 +21,16 @@ mnemonicArgsSizeMap = {
   {"jr"  , 1},
   {"beq" , 3},
   {"bne" , 3},
-  {"blt" , 3},
-  {"bge" , 3},
   {"j"   , 1},
   {"jal" , 1},
   {"sw"  , 3},
   {"lw"  , 3},
   {"slti", 3},
+  // Pseudo instructions
+  {"blt" , 3},
+  {"bge" , 3},
+  {"move", 2},
+  {"li"  , 2},
 };
 
 static const std::unordered_map<std::string_view, u64> 
