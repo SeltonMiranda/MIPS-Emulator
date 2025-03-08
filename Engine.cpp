@@ -222,13 +222,13 @@ auto Engine::run(const std::span<u8>& code) -> void {
   this->cpu.loadProgram(code);
   this->setCPUstartAddress();
 
-  this->printContentFromAllRegisters(); // Debug
+  //this->printContentFromAllRegisters(); // Debug
 
   while (!this->cpu.hasHalted())
     this->cpu.nextInstruction();
 
-  std::cout << "--------------------------------------\n"; // Debug
-  this->printContentFromAllRegisters();                    // Debug
+  //std::cout << "--------------------------------------\n"; // Debug
+  //this->printContentFromAllRegisters();                    // Debug
 }
 
 auto Engine::printContentFromAllRegisters() -> void {

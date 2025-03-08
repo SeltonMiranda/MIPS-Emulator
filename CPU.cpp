@@ -237,7 +237,6 @@ auto CPU::executeSyscall() -> void {
       third_argument = this->registers[5];
       char* buffer = reinterpret_cast<char*>(this->mem + second_argument);
       std::cin.getline(buffer, third_argument);
-      //this->writeMemoryBlock(second_argument, std::span(buffer, third_argument));
       return;
     }
 
