@@ -142,6 +142,7 @@ auto CPU::executeImm(Instruction i) -> void {
   u32 rtContent = this->readRegister(i.rt);
   u32 valueToWrite;
   u8 valueToStore[4];
+  u8 byte;
 
   switch (i.opcode) {
     case 0x04: // beq
@@ -195,6 +196,16 @@ auto CPU::executeImm(Instruction i) -> void {
     case 0x23: // lw
       valueToWrite = this->mem[rsContent + this->immExt(i.imm)];
       this->writeRegister(i.rt, valueToWrite);
+      break;
+    
+    case 0x24: // lbu
+      valueToWrite = this->mem[rsContent + this->zeroExt(i.imm)];
+      this->writeRegister(i.rt, valueToWrite);
+      break;
+    
+    case 0x28:
+      byte =  static_cast<u8>(rsContent); 
+      this->writeMemory(rtContent + this->immExt(i.imm), byte);
       break;
 
     case 0x2b:
@@ -352,6 +363,8 @@ auto CPU::execute(u32 instruction) -> void {
   case 0x0C: // andi
   case 0x0D: // ori
   case 0x23: // lw
+  case 0x24: // lb
+  case 0x28: // sb
   case 0x2b: // sw
     i = this->parseImm(instruction);
     this->executeImm(i);

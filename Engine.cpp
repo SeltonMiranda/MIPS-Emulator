@@ -34,6 +34,8 @@ static const std::unordered_map<std::string_view, u8> opcodeMap = {
     {"blt" , 0x06}, // Pseudo
     {"bge" , 0x07}, // Pseudo
     {"lw"  , 0x23},
+    {"lbu" , 0x24},
+    {"sb"  , 0x28},
     {"sw"  , 0x2b},
 };
 
@@ -171,6 +173,8 @@ auto Engine::assembleI(u8* porgram, const Token& token, u32& bin, u64& address) 
     case 0x0C: // andi
     case 0x0D: // ori
     case 0x23: // lw
+    case 0x24: // lbu
+    case 0x28: // sb
     case 0x2b: // sw
       bin |= (imm & 0xFFFF);
     break;
@@ -191,12 +195,16 @@ auto Engine::assembleInstruction(u8* program, const Token& token, u64& address) 
   u32 bin = 0;
   if (this->isPseudoInstruction(token.value))
     this->assemblePseudoInstruction(program, token, bin);
+
   else if (this->isRInstruction(token.value)) 
     this->assembleR(program, token, bin);
+
   else if (this->isIInstruction(token.value))
     this->assembleI(program, token, bin, address);
+
   else if (this->isJInstruction(token.value))
     this->assembleJ(program, token, bin);
+
   else 
     throw std::runtime_error{std::format("ERROR! Mnemonic {} not found\n", token.value)};
 
@@ -269,10 +277,13 @@ auto Engine::assemble(u8* program) -> void {
   for (const auto& token : this->tokenizer.tokens) {
     if (token.tokenType == Type::INSTRUCTION)
       this->assembleInstruction(program, token, address);
+
     else if (token.tokenType == Type::SYS_CALL)
       this->assembleSysCall(program, token, address);
+
     else if (token.tokenType == Type::LITERAL)
       this->assembleLiteral(program, token, address);
+
     else 
       throw std::runtime_error(
         std::format("Invalid token {}\n", token.value)

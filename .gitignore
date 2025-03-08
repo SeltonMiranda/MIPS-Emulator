@@ -5,3 +5,4 @@ emulator
 *.asm
 build/
 tests-examples/
+.vscode

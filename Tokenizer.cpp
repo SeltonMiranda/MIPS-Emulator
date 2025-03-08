@@ -26,6 +26,8 @@ mnemonicArgsSizeMap = {
   {"sw"  , 3},
   {"lw"  , 3},
   {"slti", 3},
+  {"lbu" , 3},
+  {"sb"  , 3},
   // Pseudo instructions
   {"blt" , 3},
   {"bge" , 3},
