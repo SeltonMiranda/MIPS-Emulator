@@ -5,6 +5,39 @@ namespace Emulator {
 
 static constexpr u64 WORD_SIZE = 4;
 
+static const std::unordered_map<std::string_view, u8> 
+mnemonicArgsSizeMap = {
+  {"addi", 3},
+  {"andi", 3},
+  {"ori" , 3},
+  {"add" , 3},
+  {"sub" , 3},
+  {"and" , 3},
+  {"or"  , 3},
+  {"nor" , 3},
+  {"sll" , 3},
+  {"srl" , 3},
+  {"slt" , 3},
+  {"jr"  , 1},
+  {"beq" , 3},
+  {"bne" , 3},
+  {"blt" , 3},
+  {"bge" , 3},
+  {"j"   , 1},
+  {"jal" , 1},
+  {"sw"  , 3},
+  {"lw"  , 3},
+};
+
+static const std::unordered_map<std::string_view, u64>
+fixedRegisters = {
+    {"zero",  0},
+    {"$v0" ,  2},
+    {"$v1" ,  3},
+    {"$sp" , 29},
+    {"$ra" , 31},
+};
+
 auto Tokenizer::isSysCall(const std::string& call) -> bool {
   return call == "syscall";
 }
@@ -139,13 +172,9 @@ auto Tokenizer::parse(const std::string& file) -> void {
   std::string section;
   u64 address = 0;
   std::unordered_map<u64, VecString> _args;
-  // int i = 0; debug
-
   while (std::getline(_file, line)) {
     VecString symbols;
     boost::trim(line);
-    //boost::algorithm::to_lower(line);
-    
     if (line.empty() || line.starts_with('#')) {
       continue;
     } else {
@@ -160,9 +189,6 @@ auto Tokenizer::parse(const std::string& file) -> void {
       this->textStartAddress = address;
       continue;
     }
-
-    // debug
-    //std::cout << std::format("line {} : {}\n", i++, line);
 
     if (section == ".data") {
 
@@ -194,12 +220,6 @@ auto Tokenizer::parse(const std::string& file) -> void {
     }
   }
 
-
-  // debug
-  //printTokens();
-  //std::cout << std::format("text start address -> {}\n", textStartAddress);
-  //debug
-
   _file.close();
 }
 
@@ -230,29 +250,6 @@ auto Tokenizer::parseArgs(const VecString& args) -> VecU64 {
   return parsedArgs;
 }
 
-static const std::unordered_map<std::string_view, u8> mnemonicArgsSizeMap = {
-  {"addi", 3},
-  {"andi", 3},
-  {"ori", 3},
-  {"add", 3},
-  {"sub", 3},
-  {"and", 3},
-  {"or", 3},
-  {"nor", 3},
-  {"sll", 3},
-  {"srl", 3},
-  {"slt", 3},
-  {"jr", 1},
-  {"beq" , 3},
-  {"bne" , 3},
-  {"blt" , 3},
-  {"bge" , 3},
-  {"j"  , 1},
-  {"jal", 1},
-  {"sw", 3},
-  {"lw", 3},
-};
-
 auto Tokenizer::validateArgumentsSize(const std::string& mnemonic, const VecString& args) -> bool {
   auto it = mnemonicArgsSizeMap.find(mnemonic);
   if (it == mnemonicArgsSizeMap.end()) {
@@ -263,25 +260,25 @@ auto Tokenizer::validateArgumentsSize(const std::string& mnemonic, const VecStri
   return args.size() == it->second;
 }
 
-static const std::unordered_map<std::string_view, u64> fixedRegisters = {
-    {"zero", 0},
-    {"v0", 2},
-    {"v1", 3},
-    {"sp", 29},
-    {"ra", 31},
-};
-
 auto Tokenizer::parseRegister(const char *arg) -> u64 {
-  
+
   if (fixedRegisters.contains(std::string(arg))) { // Checks if it's a named register
     return fixedRegisters.at(arg);
   }
 
-  char prefix{arg[0]};
+  if (arg[0] != '$') {
+    throw std::runtime_error{std::format("ERROR! Register doesn't exist {} \n", arg)};
+  }
+
+  if (std::isdigit(arg[1])) {
+    return std::atoi(arg + 1);
+  }
+
+  char prefix{arg[1]};
   u64 number;
 
-  if (1 < strlen(arg) && strlen(arg) <= 2) {
-    number = std::atoi(arg + 1);
+  if (1 < strlen(arg) && strlen(arg) <= 3) {
+    number = std::atoi(arg + 2);
   } else {
     throw std::invalid_argument(std::format("ERROR! No such a register {}\n", arg));
   }
@@ -293,8 +290,6 @@ auto Tokenizer::parseRegister(const char *arg) -> u64 {
     return number + 16;
   case 'a':
     return number + 4;
-  case '$':
-    return number;
   default:
     throw std::invalid_argument(std::format("ERROR! No such a register {}\n", arg));
   }
