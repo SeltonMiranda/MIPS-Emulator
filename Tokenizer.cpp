@@ -27,6 +27,7 @@ mnemonicArgsSizeMap = {
   {"jal" , 1},
   {"sw"  , 3},
   {"lw"  , 3},
+  {"slti", 3},
 };
 
 static const std::unordered_map<std::string_view, u64> 

@@ -177,6 +177,11 @@ auto CPU::executeImm(Instruction i) -> void {
       this->writeRegister(i.rt, valueToWrite);
       break;
 
+    case 0x0A:
+      valueToWrite = rsContent < this->zeroExt(i.imm) ? 1 : 0;
+      this->writeRegister(i.rt, valueToWrite);
+      break;
+
     case 0x0C: // andi
       valueToWrite = rsContent & this->zeroExt(i.imm);
       this->writeRegister(i.rt, valueToWrite);
@@ -343,10 +348,11 @@ auto CPU::execute(u32 instruction) -> void {
   case 0x06: // blt (Pseudo)
   case 0x07: // bge (Pseudo)
   case 0x08: // addi
+  case 0x0A: // slti
   case 0x0C: // andi
   case 0x0D: // ori
-  case 0x23:
-  case 0x2b:
+  case 0x23: // lw
+  case 0x2b: // sw
     i = this->parseImm(instruction);
     this->executeImm(i);
     break;

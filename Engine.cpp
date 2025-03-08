@@ -22,6 +22,7 @@ static const std::unordered_map<std::string_view, u8> functMap = {
 
 static const std::unordered_map<std::string_view, u8> opcodeMap = {
     {"addi", 0x08},
+    {"slti", 0x0A},
     {"andi", 0x0C},
     {"ori" , 0x0D},
     {"beq" , 0x04},
@@ -99,6 +100,7 @@ auto Engine::assembleInstruction(u8* program, const Token& token, u64& address) 
       break;
 
       case 0x08: // addi
+      case 0x0A: // slti
       case 0x0C: // andi
       case 0x0D: // ori
       case 0x23: // lw
