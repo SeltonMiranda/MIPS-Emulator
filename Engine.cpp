@@ -6,16 +6,7 @@
 
 namespace Emulator {
 
-static constexpr std::array<std::string_view, 8> syscallsNames = {
-  "print_int",
-  "read_int",
-  "print_string",
-  "read_string",
-  "print_char",
-  "read_char",
-  "exit",
-  "exit2"
-};
+static constexpr u64 WORD_SIZE = 4;
 
 static const std::unordered_map<std::string_view, u8> functMap = {
     {"add", 0x20},
@@ -176,30 +167,36 @@ auto Engine::assembleLiteral(u8* program, const Token& token, u64& address) -> v
   }
 }
 
+auto Engine::preComputeProgramLength() -> u64 {
+  u64 length = 0;
+
+  for (const auto& token : this->tokenizer.tokens) {
+    if (token.tokenType == Type::LITERAL) {
+
+      if (token.directive == Directive::WORD)
+        length += WORD_SIZE * token.args.size();
+      else if (token.directive == Directive::SPACE)
+        length += token.args.front();
+      else if (token.directive == Directive::ASCIIZ)
+        length += token.args.size();
+      else 
+        throw std::runtime_error(std::format("Unknown directive\n"));
+
+    } else if (token.tokenType == Type::INSTRUCTION || token.tokenType == Type::SYS_CALL) {
+
+      length += WORD_SIZE;
+
+    }
+  }
+  return length;
+}
+
 auto Engine::assembler(const std::string& file) -> std::tuple<u8*, size_t> {
   this->tokenizer.parse(file);
 
-  u8* program;
-  u64 length = 0;
   u64 address = 0;
-
-  for (const auto& token : this->tokenizer.tokens) {
-    if (token.tokenType == Type::INSTRUCTION || token.tokenType == Type::SYS_CALL) {
-      length += 4;
-    } else if (token.tokenType == Type::LITERAL) {
-      if (token.directive == Directive::WORD) {
-        length += 4 * token.args.size();
-      } else if (token.directive == Directive::SPACE) {
-        length += token.args.front();
-      } else if (token.directive == Directive::ASCIIZ) {
-        length += token.args.size();
-      }
-    } else {
-      throw std::runtime_error("Invalid token type");
-    }
-  }
-  
-  program = new u8[length];
+  u64 length = this->preComputeProgramLength();
+  u8* program = new u8[length];
   
   for (const auto& token : this->tokenizer.tokens) {
     if (token.tokenType == Type::INSTRUCTION) {
@@ -214,12 +211,6 @@ auto Engine::assembler(const std::string& file) -> std::tuple<u8*, size_t> {
       );
     }
   }
-
-  //debug
-  //for (u64 i = 0; i < length; i++) {
-  //  std::cout << std::format("bin[{}] ", i) << std::bitset<8>(program[i]) << '\n';
-  //}
-
   return {program, length};
 }
 

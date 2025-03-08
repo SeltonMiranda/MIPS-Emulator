@@ -17,6 +17,7 @@ public:
   Engine() = default;
   Engine(Tokenizer& tokenizer, CPU& cpu) : tokenizer{tokenizer}, cpu{cpu} {};
 
+  auto preComputeProgramLength() -> u64;
   auto run(const std::span<u8>& code) -> void;
   auto assembler(const std::string& file) -> std::tuple<u8*, size_t>;
   auto setCPUstartAddress() -> void;
