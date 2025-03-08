@@ -10,6 +10,7 @@ static constexpr u64 WORD_SIZE = 4;
 
 static constexpr std::string_view MOVE = "move";
 static constexpr std::string_view LI = "li";
+static constexpr std::string_view LA = "la";
 
 static const std::unordered_map<std::string_view, u8> functMap = {
     {"add", 0x20},
@@ -49,7 +50,7 @@ auto Engine::insertCode(u8* program, u32 bin, u64& address) -> void {
 }
 
 auto Engine::isPseudoInstruction(const std::string& mnemonic) -> bool {
-  return mnemonic == MOVE || mnemonic == LI;
+  return mnemonic == MOVE || mnemonic == LI || mnemonic == LA;
 }
 
 auto Engine::isRInstruction(const std::string& mnemonic) -> bool {
@@ -89,6 +90,17 @@ auto Engine::assemblePseudoInstruction(u8* program, const Token& token, u32& bin
     bin |= (0x00 & 0x1F) << 21; // rs (zero)
     bin |= (rt   & 0x1F) << 16; // rt 
     bin |= (imm  & 0xFFFF) << 0; // immediate
+  }
+  // "la" instruction tuns into: "addi $dst, zero, label" to cpu 
+  // Note that this implementation only works for 16 bits address space (64Kb)
+  else if (token.value == LA) {
+    u8 rd = static_cast<u8>(token.args.at(0));
+    u16 address_label = static_cast<u16>(token.args.at(1));
+
+    bin |= (0x08 & 0x3F) << 26; // opcode addi
+    bin |= (0    & 0x1F) << 21; // rs = $zero
+    bin |= (rd   & 0x1F) << 16; // rt
+    bin |= (address_label & 0xFFFF);
   } else {
     throw std::runtime_error{std::format("ERROR! Pseudo instruction {} doesn't exist\n", token.value)};
   }
