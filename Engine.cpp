@@ -7,6 +7,7 @@
 namespace Emulator {
 
 static constexpr u64 WORD_SIZE = 4;
+
 static constexpr std::string_view MOVE = "move";
 static constexpr std::string_view LI = "li";
 
@@ -40,8 +41,27 @@ static const std::unordered_map<std::string_view, u8> jumpMap = {
   {"jal", 0x03},
 };
 
+auto Engine::insertCode(u8* program, u32 bin, u64& address) -> void {
+  for (size_t i = 0; i < WORD_SIZE; i++) {
+      program[address + i] = static_cast<u8>((bin >> i * 8) & 0xFF);
+  }
+  address += WORD_SIZE;
+}
+
 auto Engine::isPseudoInstruction(const std::string& mnemonic) -> bool {
   return mnemonic == MOVE || mnemonic == LI;
+}
+
+auto Engine::isRInstruction(const std::string& mnemonic) -> bool {
+  return functMap.contains(mnemonic);
+}
+
+auto Engine::isIInstruction(const std::string& mnemonic) -> bool {
+  return opcodeMap.contains(mnemonic);
+}
+
+auto Engine::isJInstruction(const std::string& mnemonic) -> bool {
+  return jumpMap.contains(mnemonic);
 }
 
 auto Engine::assemblePseudoInstruction(u8* program, const Token& token, u32& bin) -> void {
@@ -74,94 +94,101 @@ auto Engine::assemblePseudoInstruction(u8* program, const Token& token, u32& bin
   }
 }
 
+auto Engine::assembleR(u8* program, const Token& token, u32& bin) -> void {
+  u8 rs, rt, rd, shamt, funct;
+  rs = rt = 0;
+  shamt = 0;
+ 
+  funct = functMap.at(token.value);
+  rd = static_cast<u8>(token.args.at(0));
+
+  switch (funct) {
+    case 0x00: // sll
+    case 0x02: // srl
+      rt = static_cast<u8>(token.args.at(1));
+      shamt = static_cast<u8>(token.args.at(2));
+      break;
+
+    case 0x20: // add
+    case 0x22: // sub
+    case 0x24: // and
+    case 0x25: // or
+    case 0x27: // nor 
+    case 0x2A: // slt
+      rs = static_cast<u8>(token.args.at(1));
+      rt = static_cast<u8>(token.args.at(2));
+      break;
+
+    case 0x08: // jr
+      rs = static_cast<u8>(token.args.at(0));
+      break;
+  }
+
+  bin |= (rs    & 0x1F) << 21;    // rs
+  bin |= (rt    & 0x1F) << 16;    // rt
+  bin |= (rd    & 0x1F) << 11;    // rd
+  bin |= (shamt & 0x1F) << 6;     // shamt
+  bin |= (funct & 0x3F) << 0;     // funct
+}
+
+auto Engine::assembleI(u8* porgram, const Token& token, u32& bin, u64& address) -> void {
+  u8 opcode, rt, rs;
+  s16 imm;
+    
+  rt = static_cast<u8>(token.args.at(0));
+  rs = static_cast<u8>(token.args.at(1));
+  imm = static_cast<s16>(token.args.at(2));
+  opcode = opcodeMap.at(token.value);
+
+  bin |= (opcode &   0x3F) << 26;
+  bin |= (rs     &   0x1F) << 21;
+  bin |= (rt     &   0x1F) << 16;
+  switch (opcode) {
+    case 0x04: // beq
+    case 0x05: // bne
+    case 0x06: // blt
+    case 0x07: // bge
+    {
+      s32 offset = (imm - address) >> 2;
+      bin |= (offset & 0xFFFF);
+    }
+    break;
+
+    case 0x08: // addi
+    case 0x0A: // slti
+    case 0x0C: // andi
+    case 0x0D: // ori
+    case 0x23: // lw
+    case 0x2b: // sw
+      bin |= (imm & 0xFFFF);
+    break;
+  }
+}
+
+auto Engine::assembleJ(u8* porgram, const Token& token, u32& bin) -> void {
+  u8 opcode;
+  u32 address;
+  opcode = jumpMap.at(token.value);
+  address = static_cast<u32>(token.args.at(0));
+
+  bin |= (opcode & 0x3F) << 26;
+  bin |= (address & 0x3FFFFFF);
+}
+
 auto Engine::assembleInstruction(u8* program, const Token& token, u64& address) -> void {
   u32 bin = 0;
-  if (this->isPseudoInstruction(token.value)) {
+  if (this->isPseudoInstruction(token.value))
     this->assemblePseudoInstruction(program, token, bin);
-  } else if (functMap.contains(token.value)) {
-    u8 rs, rt, rd, shamt, funct;
-    rs = rt = 0;
-    shamt = 0;
- 
-    funct = functMap.at(token.value);
-    rd = static_cast<u8>(token.args.at(0));
+  else if (this->isRInstruction(token.value)) 
+    this->assembleR(program, token, bin);
+  else if (this->isIInstruction(token.value))
+    this->assembleI(program, token, bin, address);
+  else if (this->isJInstruction(token.value))
+    this->assembleJ(program, token, bin);
+  else 
+    throw std::runtime_error{std::format("ERROR! Mnemonic {} not found\n", token.value)};
 
-    switch (funct) {
-      case 0x00: // sll
-      case 0x02: // srl
-        rt = static_cast<u8>(token.args.at(1));
-        shamt = static_cast<u8>(token.args.at(2));
-        break;
-
-      case 0x20: // add
-      case 0x22: // sub
-      case 0x24: // and
-      case 0x25: // or
-      case 0x27: // nor 
-      case 0x2A: // slt
-        rs = static_cast<u8>(token.args.at(1));
-        rt = static_cast<u8>(token.args.at(2));
-        break;
-
-      case 0x08: // jr
-        rs = static_cast<u8>(token.args.at(0));
-        break;
-    }
-
-    bin |= (rs    & 0x1F) << 21;    // rs
-    bin |= (rt    & 0x1F) << 16;    // rt
-    bin |= (rd    & 0x1F) << 11;    // rd
-    bin |= (shamt & 0x1F) << 6;     // shamt
-    bin |= (funct & 0x3F) << 0;     // funct
-  } else if (opcodeMap.contains(token.value)) {
-    u8 opcode, rt, rs;
-    s16 imm;
-    
-    rt = static_cast<u8>(token.args.at(0));
-    rs = static_cast<u8>(token.args.at(1));
-    imm = static_cast<s16>(token.args.at(2));
-    opcode = opcodeMap.at(token.value);
-
-    bin |= (opcode &   0x3F) << 26;
-    bin |= (rs     &   0x1F) << 21;
-    bin |= (rt     &   0x1F) << 16;
-    switch (opcode) {
-      case 0x04: // beq
-      case 0x05: // bne
-      case 0x06: // blt
-      case 0x07: // bge
-      {
-        s32 offset = (imm - address) >> 2;
-        bin |= (offset & 0xFFFF);
-      }
-      break;
-
-      case 0x08: // addi
-      case 0x0A: // slti
-      case 0x0C: // andi
-      case 0x0D: // ori
-      case 0x23: // lw
-      case 0x2b: // sw
-        bin |= (imm & 0xFFFF);
-      break;
-    }
-  } else if (jumpMap.contains(token.value)) {
-    u8 opcode;
-    u32 address;
-    opcode = jumpMap.at(token.value);
-    address = static_cast<u32>(token.args.at(0));
-
-    bin |= (opcode & 0x3F) << 26;
-    bin |= (address & 0x3FFFFFF);
-  } else {
-    std::string err{std::format("Mnemonic {} not found\n", token.value)};
-    throw std::runtime_error(err);
-  } 
-
-  for (size_t i = 0; i < 4; i++) {
-      program[address + i] = static_cast<u8>((bin >> i * 8) & 0xFF);
-  }
-  address += 4;
+  this->insertCode(program, bin, address);
 }
 
 auto Engine::assembleSysCall(u8* program, const Token& token, u64& address)
@@ -173,10 +200,7 @@ auto Engine::assembleSysCall(u8* program, const Token& token, u64& address)
     throw std::runtime_error{std::format("Mnemonic {} doesn't exist\n", token.value)};
   }
 
-  for (size_t i = 0; i < 4; i++) {
-    program[address + i] = static_cast<u8>((bin >> i * 8) & 0xFF);
-  }
-  address += 4;
+  this->insertCode(program, bin, address);
 }
 
 auto Engine::assembleLiteral(u8* program, const Token& token, u64& address) -> void {
@@ -184,10 +208,7 @@ auto Engine::assembleLiteral(u8* program, const Token& token, u64& address) -> v
 
     for (u8 i = 0; i < token.args.size(); i++) {
       u32 bin = static_cast<u32>(token.args[i]);
-      for (u8 i = 0; i < 4; i++) {
-        program[address + i] = static_cast<u8>((bin >> i * 8) & 0xFF);
-      }
-      address += 4;
+      this->insertCode(program, bin, address);
     }
 
   } else if (token.directive == Directive::SPACE) {
