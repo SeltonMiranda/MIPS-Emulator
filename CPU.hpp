@@ -7,6 +7,7 @@ namespace Emulator {
 
 class CPU {
 public:
+  // That is to easily move data across the functions
   struct Instruction { 
     u64 address;
     u32 opcode;
@@ -42,6 +43,7 @@ public:
   // Self-explanatory
   auto loadProgram(const std::span<u8> program) -> void;
 
+  // Parses J-type instructions
   auto parseJ(u32 instruction) -> Instruction;
  
   // Parses I-type instructions
@@ -50,6 +52,7 @@ public:
   // Parses R-type instructions
   auto parseR(u32 instruction) -> Instruction;
 
+  // Executes an J-type instruction
   auto executeJ(Instruction i) -> void;
 
   // Executes an I-type instruction
@@ -58,6 +61,7 @@ public:
   // Executes an R-type instruction
   auto executeR(Instruction i) -> void;
 
+  // Executes an syscall
   auto executeSyscall() -> void;
 
   // Executes an instruction
@@ -81,6 +85,7 @@ public:
   // Writes "len(value)" bytes to memory
   auto writeMemoryBlock(u64 address, const std::span<u8> value) -> void;
 
+  // Dumps the memory in hex format
   auto dumpMemory(size_t size) -> void;
 };
 

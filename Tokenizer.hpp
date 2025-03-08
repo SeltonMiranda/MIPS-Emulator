@@ -26,19 +26,41 @@ public:
   // Parses the register's number
   auto parseRegister(const char *arg) -> u64;
 
+  // Parses the label 
   auto parseLabel(std::string& symbol, u64 address) -> void;
+
+  // Parses the syscall
   auto parseSysCall(std::string& symbol, u64 address) -> void;
+
+  // Parses an Instruction
+  // Parameter _args stores the address from a label (wether the instruction has any as argument)
   auto parseInstruction(VecString& symbols, u64 address, std::unordered_map<u64, VecString>& _args) -> void;
+
+  // Parses the data section
   auto parseDataSection(std::string& line, u64& address) -> void;
 
+  // Self-explanatory
   auto removeInlineComments(std::string& line) -> void;
+  
+  // Self-explanatory
   auto isNumber(const char& c) -> bool;
+
+  // Self-explanatory
   auto isSysCall(const std::string& call) -> bool;
+
+  // Self-explanatory
   auto isLabel(const std::string& label) -> bool; 
+
+  // Parses arguments from an instruction
   auto parseArgs(const VecString& args) -> VecU64;
+
+  // Verifies if total of arguments matches the respectively instruction
   auto validateArgumentsSize(const std::string& mnemonic, const VecString& args) -> bool;
+
+  // Parses the asm file
   auto parse(const std::string& file) -> void;
 
+  // Debug purposes
   auto printTokens() -> void;
 };
 
