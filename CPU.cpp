@@ -198,6 +198,9 @@ auto CPU::executeImm(Instruction i) -> void {
       {
         u32 valueToWrite = 0;
         u32 address = rsContent + this->immExt(i.imm);
+        if (address >= this->max_size) {
+          throw std::runtime_error{std::format("ERROR! address is to big\n")};
+        }
         valueToWrite |= static_cast<u8>(this->mem[address + 0]) <<  0; 
         valueToWrite |= static_cast<u8>(this->mem[address + 1]) <<  8; 
         valueToWrite |= static_cast<u8>(this->mem[address + 2]) << 16; 
@@ -218,10 +221,10 @@ auto CPU::executeImm(Instruction i) -> void {
 
     case 0x2b: // sw
       for (u8 i = 0; i < 4; i++) {
-        valueToStore[i] = static_cast<u8>((rsContent >> i * 8) & 0xFF);
+        valueToStore[i] = static_cast<u8>((rtContent >> i * 8) & 0xFF);
       }
       this->writeMemoryBlock(
-        rtContent + this->immExt(i.imm),
+        rsContent + this->immExt(i.imm),
         std::span<u8>(valueToStore, 4)
       );
       break;
@@ -322,13 +325,13 @@ auto CPU::executeR(Instruction i) -> void {
     return;
 
   case 0x20: // add
-    valueToWrite = rsContent + rtContent;
-    this->writeRegister(i.rd, valueToWrite);
+    valueToWrite = static_cast<u32>(rsContent) + static_cast<u32>(rtContent);
+    this->writeRegister(i.rd, static_cast<u32>(valueToWrite));
     break;
 
   case 0x22: // sub
-    valueToWrite = rsContent - rtContent;
-    this->writeRegister(i.rd, valueToWrite);
+    valueToWrite = static_cast<s32>(rsContent) - static_cast<s32>(rtContent);
+    this->writeRegister(i.rd, static_cast<s32>(valueToWrite));
     break;
 
   case 0x24: // and
