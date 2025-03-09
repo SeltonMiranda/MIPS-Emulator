@@ -19,10 +19,10 @@ main:
   add $t2, $t0, $t1 # first char
   lbu $t3, $t2, 0    # Loads (&string + $t0)
 for:
-  beq $t3, zero, out 
+  beq $t3, $zero, out 
   addi $t1, $t1, 1
   add $t2, $t0, $t1
-  lbu $t3, $t2, 0
+  lbu $t3, 0($t2)
   j for
 out:
   # Removes '\0' from counting

@@ -61,7 +61,7 @@ factorial:
   move $t1, $a0
 
 while:
-  beq $t1, zero, return 
+  beq $t1, $zero, return 
   mul $t0, $t1, $t0
   addi $t1, $t1, -1
   j while

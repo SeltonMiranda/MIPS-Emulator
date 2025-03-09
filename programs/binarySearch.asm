@@ -92,7 +92,7 @@ while:
   # Compute address of array[mid]
   sll $t5, $t4, 2    # Multiply mid index by 4 (word size)
   add $t6, $t3, $t5  # Compute address of array[mid]
-  lw $t7, $t6, 0     # Load array[mid] value
+  lw $t7, 0($t6)     # Load array[mid] value
 
   # If array[mid] == target, return mid index
   beq $t7, $t8, found

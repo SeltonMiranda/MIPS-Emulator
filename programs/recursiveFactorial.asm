@@ -62,8 +62,8 @@ main:
 factorial:
   # Store return address ($ra) and function parameter ($a0) in stack
   addi $sp, $sp, -8
-  sw $sp, $ra, 0
-  sw $sp, $a0, 4
+  sw $sp, 0($ra)
+  sw $sp, 4($a0)
 
   # Decrement $a0
   addi $a0, $a0, -1 
@@ -75,8 +75,8 @@ factorial:
   jal factorial
 
   # Returning from call stack, retrieve return address and function parameter from stack
-  lw $ra, $sp, 0
-  lw $a0, $sp, 4
+  lw $ra, 0($sp)
+  lw $a0, 4($sp)
   addi $sp, $sp, 8
 
   # Multiply the returned value with the parameter

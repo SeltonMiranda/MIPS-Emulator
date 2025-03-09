@@ -39,7 +39,7 @@ mnemonicArgsSizeMap = {
 
 static const std::unordered_map<std::string_view, u64> 
 RegisterNames = {
-    {"zero",  0},
+    {"$zero",  0},
     {"$at" ,  1},
     {"$v0" ,  2},
     {"$v1" ,  3},
@@ -102,13 +102,15 @@ auto Tokenizer::parseInstruction(VecString& symbols, u64 address, std::unordered
   
   std::vector<std::string> args;
   for (size_t i = 1; i < size(symbols); i++) {
-    //boost::algorithm::to_lower(symbols[i]);
-    args.push_back(symbols[i]);
+      args.push_back(symbols[i]);
   }
+
+  // boost::split creates an empty token when string ends with a delimiter, in that case, it should be removed 
+  std::erase_if(args, [](const std::string& str) { return str.empty(); });
 
   if (!validateArgumentsSize(symbols[0], args)) {
     throw std::invalid_argument(
-      std::format("ERROR! Not enough arguments in instruction {}\n", instructionToken.value)
+      std::format("ERROR! Not enough arguments in instruction {} size {}\n", instructionToken.value, args.size())
     );
   }
 
@@ -231,7 +233,7 @@ auto Tokenizer::parse(const std::string& file) -> void {
       
     } else if (section == ".text") {
 
-      boost::split(symbols, line, boost::is_any_of(", "), boost::token_compress_on);
+      boost::split(symbols, line, boost::is_any_of(", ()"), boost::token_compress_on);
       std::string tag = symbols[0];
 
       if (this->isLabel(tag)) {

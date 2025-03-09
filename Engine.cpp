@@ -174,12 +174,22 @@ auto Engine::assembleI(u8* porgram, const Token& token, u32& bin, u64& address) 
     case 0x0A: // slti
     case 0x0C: // andi
     case 0x0D: // ori
+    //case 0x23: // lw
+    //case 0x24: // lbu
+    //case 0x28: // sb
+    //case 0x2b: // sw
+      bin |= (imm & 0xFFFF);
+    break;
+
     case 0x23: // lw
     case 0x24: // lbu
     case 0x28: // sb
     case 0x2b: // sw
+      rs = static_cast<u8>(token.args.at(2));
+      imm = static_cast<s16>(token.args.at(1));
+      bin |= (rs     &   0x1F) << 21;
       bin |= (imm & 0xFFFF);
-    break;
+      break;
   }
 }
 

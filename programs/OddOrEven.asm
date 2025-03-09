@@ -25,7 +25,7 @@ main:
   move $a0, $v0 
   jal compute_remainder  
 
-  beq $v0, zero, isEven 
+  beq $v0, $zero, isEven 
 
   # is odd
   li $v0, 4
