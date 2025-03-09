@@ -137,8 +137,7 @@ auto Tokenizer::parseDataSection(std::string& line, u64& address) -> void {
 
     u8 numberOfLiterals = 0;
     for (size_t i = 2; i < symbols.size(); i++) {
-      u64 literal = static_cast<u64>(std::stoi(symbols[i]));
-      literalToken.args.push_back(literal);
+      literalToken.args.push_back(std::stoi(symbols[i]));
       numberOfLiterals++;
     }
     this->tokens.push_back(literalToken);

@@ -195,7 +195,7 @@ auto CPU::executeImm(Instruction i) -> void {
 
     case 0x23: // lw
       valueToWrite = this->mem[rsContent + this->immExt(i.imm)];
-      this->writeRegister(i.rt, valueToWrite);
+      this->writeRegister(i.rt, static_cast<s32>(valueToWrite));
       break;
     
     case 0x24: // lbu
