@@ -28,6 +28,7 @@ mnemonicArgsSizeMap = {
   {"slti", 3},
   {"lbu" , 3},
   {"sb"  , 3},
+  {"mul" , 3},
   // Pseudo instructions
   {"blt" , 3},
   {"bge" , 3},
@@ -101,13 +102,13 @@ auto Tokenizer::parseInstruction(VecString& symbols, u64 address, std::unordered
   
   std::vector<std::string> args;
   for (size_t i = 1; i < size(symbols); i++) {
-    boost::algorithm::to_lower(symbols[i]);
+    //boost::algorithm::to_lower(symbols[i]);
     args.push_back(symbols[i]);
   }
 
   if (!validateArgumentsSize(symbols[0], args)) {
     throw std::invalid_argument(
-      std::format("ERROR! Not enough arguments")
+      std::format("ERROR! Not enough arguments in instruction {}\n", instructionToken.value)
     );
   }
 
@@ -136,7 +137,8 @@ auto Tokenizer::parseDataSection(std::string& line, u64& address) -> void {
 
     u8 numberOfLiterals = 0;
     for (size_t i = 2; i < symbols.size(); i++) {
-      literalToken.args.push_back(std::stoi(symbols[i]));
+      u64 literal = static_cast<u64>(std::stoi(symbols[i]));
+      literalToken.args.push_back(literal);
       numberOfLiterals++;
     }
     this->tokens.push_back(literalToken);

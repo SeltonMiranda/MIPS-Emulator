@@ -22,6 +22,7 @@ static const std::unordered_map<std::string_view, u8> functMap = {
     {"srl", 0x02}, 
     {"slt", 0x2A},
     {"jr" , 0x08},
+    {"mul", 0x01}, // Pseudo
 };
 
 static const std::unordered_map<std::string_view, u8> opcodeMap = {
@@ -123,6 +124,7 @@ auto Engine::assembleR(u8* program, const Token& token, u32& bin) -> void {
       shamt = static_cast<u8>(token.args.at(2));
       break;
 
+    case 0x01: // mul
     case 0x20: // add
     case 0x22: // sub
     case 0x24: // and

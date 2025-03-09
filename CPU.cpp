@@ -230,7 +230,7 @@ auto CPU::executeSyscall() -> void {
   switch (first_argument) {
     case 1: { // print_int
       second_argument = this->registers[4];
-      std::cout << static_cast<int>(second_argument);
+      std::cout << static_cast<s32>(second_argument);
       return;
     }
 
@@ -296,6 +296,11 @@ auto CPU::executeR(Instruction i) -> void {
 
   case 0x00: // sll
     valueToWrite = rtContent << i.shamt;
+    this->writeRegister(i.rd, valueToWrite);
+    break;
+
+  case 0x01: // mul
+    valueToWrite = rsContent * rtContent;
     this->writeRegister(i.rd, valueToWrite);
     break;
 
