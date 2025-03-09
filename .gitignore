@@ -1,9 +1,7 @@
 .vscode
-programs/binarySearch.asm
 *.o
 *.gch
 emulator
 *.txt
-*.asm
 build/
 tests-examples/
