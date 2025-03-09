@@ -62,8 +62,8 @@ main:
 factorial:
   # Store return address ($ra) and function parameter ($a0) in stack
   addi $sp, $sp, -8
-  sw $sp, 0($ra)
-  sw $sp, 4($a0)
+  sw $ra, 0($sp)
+  sw $a0, 4($sp)
 
   # Decrement $a0
   addi $a0, $a0, -1 
