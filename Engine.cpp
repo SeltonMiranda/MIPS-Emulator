@@ -82,14 +82,14 @@ auto Engine::assemblePseudoInstruction(u8* program, const Token& token, u32& bin
     bin |= (0     & 0x1F) << 6;  // shamt = 0
     bin |= (0x20  & 0x3F) << 0;  // funct = add (0x20)
   } 
-  // "li" instruction turns into: "ori $dst, $src, zero" to cpu
+  // "li" instruction turns into: "addi $dst, $src, zero" to cpu
   // Note that this implementation only works for 16 bits immediate
   // 32 bits immediate will eventually deal with it
   else if (token.value == LI) {
     u8 rt = static_cast<u8>(token.args.at(0)); //Destiny
     s32 imm = static_cast<s32>(token.args.at(1)); // immediate
 
-    bin |= (0x0D & 0x3F) << 26; // opcode 
+    bin |= (0x08 & 0x3F) << 26; // opcode 
     bin |= (0x00 & 0x1F) << 21; // rs (zero)
     bin |= (rt   & 0x1F) << 16; // rt 
     bin |= (imm  & 0xFFFF) << 0; // immediate

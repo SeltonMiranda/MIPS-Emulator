@@ -141,33 +141,34 @@ auto CPU::executeImm(Instruction i) -> void {
   u32 rsContent = this->readRegister(i.rs);
   u32 rtContent = this->readRegister(i.rt);
   u32 valueToWrite;
+  //s32 signedValue;
   u8 valueToStore[4];
   u8 byte;
 
   switch (i.opcode) {
     case 0x04: // beq
-      if (rsContent == rtContent) {
+      if (static_cast<s32>(rsContent) == static_cast<s32>(rtContent)) {
         s32 offset = this->immExt(i.imm) << 2 ;
         this->pc = u32(s32(this->pc) + offset) - 4; 
       }
       break;
     
     case 0x05: // bne 
-      if (rsContent != rtContent) {
+      if (static_cast<s32>(rsContent) != static_cast<s32>(rtContent)) {
         s32 offset = this->immExt(i.imm) << 2 ;
         this->pc = u32(s32(this->pc) + offset) - 4;
       }
       break;
 
     case 0x06: // blt
-      if (rtContent < rsContent) {
+      if (static_cast<s32>(rtContent) < static_cast<s32>(rsContent)) {
         s32 offset = this->immExt(i.imm) << 2 ;
         this->pc = u32(s32(this->pc) + offset) - 4;
       }
       break;
 
     case 0x07: // bge
-      if (rtContent >= rsContent) {
+      if (static_cast<s32>(rtContent) >= static_cast<s32>(rsContent)) {
         s32 offset = this->immExt(i.imm) << 2 ;
         this->pc = u32(s32(this->pc) + offset) - 4;
       }
@@ -178,7 +179,7 @@ auto CPU::executeImm(Instruction i) -> void {
       this->writeRegister(i.rt, valueToWrite);
       break;
 
-    case 0x0A:
+    case 0x0A: // slti
       valueToWrite = rsContent < this->zeroExt(i.imm) ? 1 : 0;
       this->writeRegister(i.rt, valueToWrite);
       break;
@@ -194,8 +195,15 @@ auto CPU::executeImm(Instruction i) -> void {
       break;
 
     case 0x23: // lw
-      valueToWrite = this->mem[rsContent + this->immExt(i.imm)];
-      this->writeRegister(i.rt, static_cast<s32>(valueToWrite));
+      {
+        u32 valueToWrite = 0;
+        u32 address = rsContent + this->immExt(i.imm);
+        valueToWrite |= static_cast<u8>(this->mem[address + 0]) <<  0; 
+        valueToWrite |= static_cast<u8>(this->mem[address + 1]) <<  8; 
+        valueToWrite |= static_cast<u8>(this->mem[address + 2]) << 16; 
+        valueToWrite |= static_cast<u8>(this->mem[address + 3]) << 24; 
+        this->writeRegister(i.rt, valueToWrite);
+      }
       break;
     
     case 0x24: // lbu
@@ -203,12 +211,12 @@ auto CPU::executeImm(Instruction i) -> void {
       this->writeRegister(i.rt, valueToWrite);
       break;
     
-    case 0x28:
+    case 0x28: // sb
       byte =  static_cast<u8>(rsContent); 
       this->writeMemory(rtContent + this->immExt(i.imm), byte);
       break;
 
-    case 0x2b:
+    case 0x2b: // sw
       for (u8 i = 0; i < 4; i++) {
         valueToStore[i] = static_cast<u8>((rsContent >> i * 8) & 0xFF);
       }
