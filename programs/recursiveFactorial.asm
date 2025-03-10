@@ -69,7 +69,7 @@ factorial:
   addi $a0, $a0, -1 
 
   # If it's equals to zero return 1
-  beq $a0, zero, return
+  beq $a0, $zero, return
 
   # Call factorial again
   jal factorial

@@ -29,7 +29,7 @@ public:
   ~CPU() = default;
 
   // Reads next instruction and execute it
-  auto nextInstruction() -> void;
+  auto fetchInstruction() -> void;
 
   // Checks if program finished
   auto hasHalted() -> bool;
@@ -43,14 +43,14 @@ public:
   // Self-explanatory
   auto loadProgram(const std::span<u8> program) -> void;
 
-  // Parses J-type instructions
-  auto parseJ(u32 instruction) -> Instruction;
+  // decodes J-type instructions
+  auto decodeJ(u32 instruction) -> Instruction;
  
-  // Parses I-type instructions
-  auto parseImm(u32 instruction) -> Instruction;
+  // decodes I-type instructions
+  auto decodeImm(u32 instruction) -> Instruction;
 
-  // Parses R-type instructions
-  auto parseR(u32 instruction) -> Instruction;
+  // decodes R-type instructions
+  auto decodeR(u32 instruction) -> Instruction;
 
   // Executes an J-type instruction
   auto executeJ(Instruction i) -> void;

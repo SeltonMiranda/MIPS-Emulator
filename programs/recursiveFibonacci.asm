@@ -15,8 +15,7 @@
 
 .data
 msg1: .asciiz: "o numero"
-msg2: .asciiz: "da sequencia eh:"
-new_line: .word 10 # '\n'
+msg2: .asciiz: " da sequencia eh"
 
 .text
 main:
@@ -27,6 +26,7 @@ main:
 
   # Stores the input
   move $a0, $v0
+  move $t9, $a0
 
   # Calls function 
   jal rfibonacci
@@ -41,7 +41,7 @@ main:
 
   # Prints variable "n"
   li $v0, 1
-  move $a0, $a0
+  move $a0, $t9
   syscall
 
   # Prints msg2
@@ -49,13 +49,14 @@ main:
   la $a0, msg2
   syscall
 
+  # Prints value from function
   li $v0, 1
   move $a0, $t0
   syscall
 
   # Prints new line
   li $v0, 11
-  la $a0, new_line
+  li $a0, 10
   syscall
 
   # Ends program

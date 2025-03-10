@@ -56,15 +56,15 @@ auto Engine::isPseudoInstruction(const std::string& mnemonic) -> bool {
   return mnemonic == MOVE || mnemonic == LI || mnemonic == LA;
 }
 
-auto Engine::isRInstruction(const std::string& mnemonic) -> bool {
+auto Engine::isRTypeInstruction(const std::string& mnemonic) -> bool {
   return functMap.contains(mnemonic);
 }
 
-auto Engine::isIInstruction(const std::string& mnemonic) -> bool {
+auto Engine::isITypeInstruction(const std::string& mnemonic) -> bool {
   return opcodeMap.contains(mnemonic);
 }
 
-auto Engine::isJInstruction(const std::string& mnemonic) -> bool {
+auto Engine::isJTypeInstruction(const std::string& mnemonic) -> bool {
   return jumpMap.contains(mnemonic);
 }
 
@@ -208,13 +208,13 @@ auto Engine::assembleInstruction(u8* program, const Token& token, u64& address) 
   if (this->isPseudoInstruction(token.value))
     this->assemblePseudoInstruction(program, token, bin);
 
-  else if (this->isRInstruction(token.value)) 
+  else if (this->isRTypeInstruction(token.value)) 
     this->assembleR(program, token, bin);
 
-  else if (this->isIInstruction(token.value))
+  else if (this->isITypeInstruction(token.value))
     this->assembleI(program, token, bin, address);
 
-  else if (this->isJInstruction(token.value))
+  else if (this->isJTypeInstruction(token.value))
     this->assembleJ(program, token, bin);
 
   else 
@@ -305,7 +305,7 @@ auto Engine::assemble(u8* program) -> void {
 
 auto Engine::assembler(const std::string& file) -> std::tuple<u8*, size_t> {
 
-  this->tokenizer.parse(file);
+  this->tokenizer.tokenize(file);
   u64 length = this->preComputeProgramLength();
   u8* program = new u8[length];
   this->assemble(program); 
@@ -321,13 +321,9 @@ auto Engine::run(const std::span<u8>& code) -> void {
   this->cpu.loadProgram(code);
   this->setCPUstartAddress();
 
-  //this->printContentFromAllRegisters(); // Debug
-
-  while (!this->cpu.hasHalted())
-    this->cpu.nextInstruction();
-
-  //std::cout << "--------------------------------------\n"; // Debug
-  //this->printContentFromAllRegisters();                    // Debug
+  while (!this->cpu.hasHalted()) {
+    this->cpu.fetchInstruction();
+  }
 }
 
 auto Engine::printContentFromAllRegisters() -> void {

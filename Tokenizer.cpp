@@ -4,6 +4,12 @@
 namespace Emulator {
 
 static constexpr u64 WORD_SIZE = 4;
+static constexpr std::string_view WORD_DIRECTIVE = ".word";
+static constexpr std::string_view ASCIIZ_DIRECTIVE = ".asciiz";
+static constexpr std::string_view SPACE_DIRECTIVE = ".space";
+static constexpr std::string_view TEXT_SECTION = ".text";
+static constexpr std::string_view DATA_SECTION = ".data";
+
 
 static const std::unordered_map<std::string_view, u8> 
 mnemonicArgsSizeMap = {
@@ -81,12 +87,12 @@ auto Tokenizer::isLabel(const std::string& label) -> bool {
   return label.back() == ':';
 }
 
-auto Tokenizer::parseLabel(std::string& symbol, u64 address) -> void {
+auto Tokenizer::tokenizeLabel(std::string& symbol, u64 address) -> void {
   symbol.erase(symbol.begin() + symbol.size() - 1); // remove ':'
   this->labelsToAddress[symbol] = address;
 }
 
-auto Tokenizer::parseSysCall(std::string& symbol, u64 address) -> void {
+auto Tokenizer::tokenizeSysCall(std::string& symbol, u64 address) -> void {
   Token SysCallToken;
   SysCallToken.tokenType = Type::SYS_CALL;
   SysCallToken.value = symbol;
@@ -94,7 +100,7 @@ auto Tokenizer::parseSysCall(std::string& symbol, u64 address) -> void {
   this->tokens.push_back(SysCallToken);
 }
 
-auto Tokenizer::parseInstruction(VecString& symbols, u64 address, std::unordered_map<u64, VecString>& _args) -> void {
+auto Tokenizer::tokenizeInstruction(VecString& symbols, u64 address, std::unordered_map<u64, VecString>& _args) -> void {
   Token instructionToken;
   instructionToken.tokenType = Type::INSTRUCTION;
   instructionToken.value = symbols[0];
@@ -118,7 +124,7 @@ auto Tokenizer::parseInstruction(VecString& symbols, u64 address, std::unordered
   _args[address] = args;
 }
 
-auto Tokenizer::parseDataSection(std::string& line, u64& address) -> void {
+auto Tokenizer::tokenizeDataSection(std::string& line, u64& address) -> void {
   VecString symbols;
   boost::split(symbols, line, boost::is_any_of(": "), boost::token_compress_on);
 
@@ -128,8 +134,7 @@ auto Tokenizer::parseDataSection(std::string& line, u64& address) -> void {
     );
   }
 
-  if (symbols.at(1) == ".word") {
-
+  if (symbols.at(1) == WORD_DIRECTIVE) {
     Token literalToken = {
       .tokenType = Type::LITERAL,
       .address = address,
@@ -147,7 +152,7 @@ auto Tokenizer::parseDataSection(std::string& line, u64& address) -> void {
 
     address += WORD_SIZE * numberOfLiterals;
 
-  } else if (symbols.at(1) == ".space") {
+  } else if (symbols.at(1) == SPACE_DIRECTIVE) {
 
     Token literalToken = {
       .tokenType = Type::LITERAL,
@@ -156,19 +161,21 @@ auto Tokenizer::parseDataSection(std::string& line, u64& address) -> void {
       .directive = Directive::SPACE,
     };
 
-    literalToken.args.push_back(std::stoi(symbols[2]));
+    literalToken.args.push_back(std::stoi(symbols.at(2)));
     this->tokens.push_back(literalToken);
     this->labelsToAddress[literalToken.value] = address;
 
     address += literalToken.args.front();
 
-  } else if (symbols.at(1) == ".asciiz") {
+  } else if (symbols.at(1) == ASCIIZ_DIRECTIVE) {
 
     std::string strValue;
     for (u32 i = 2; i < symbols.size(); i++) {
       strValue.append(symbols.at(i));
       strValue.append(" ");
     }
+    
+    // Remove '"' from string
     std::erase_if(strValue, [](char c) { return c == '"'; });
 
     Token literalToken = {
@@ -196,7 +203,7 @@ auto Tokenizer::parseDataSection(std::string& line, u64& address) -> void {
 }
 
 
-auto Tokenizer::parse(const std::string& file) -> void {
+auto Tokenizer::tokenize(const std::string& file) -> void {
   std::ifstream _file{file};
 
   if (!_file.is_open()) {
@@ -209,40 +216,40 @@ auto Tokenizer::parse(const std::string& file) -> void {
   std::string section;
   u64 address = 0;
   std::unordered_map<u64, VecString> _args;
+
   while (std::getline(_file, line)) {
     VecString symbols;
     boost::trim(line);
     if (line.empty() || line.starts_with('#')) {
       continue;
-    } else {
-      this->removeInlineComments(line);
     }
+    this->removeInlineComments(line);
 
-    if (line == ".data") {
+    if (line == DATA_SECTION) {
       section = ".data";
       continue;
-    } else if (line == ".text") {
+    } else if (line == TEXT_SECTION) {
       section = ".text";
       this->textStartAddress = address;
       continue;
     }
 
-    if (section == ".data") {
+    if (section == DATA_SECTION) {
 
-      this->parseDataSection(line, address);
+      this->tokenizeDataSection(line, address);
       
-    } else if (section == ".text") {
+    } else if (section == TEXT_SECTION) {
 
       boost::split(symbols, line, boost::is_any_of(", ()"), boost::token_compress_on);
       std::string tag = symbols[0];
 
       if (this->isLabel(tag)) {
-        this->parseLabel(tag, address);
+        this->tokenizeLabel(tag, address);
       } else if (this->isSysCall(tag)) {
-        this->parseSysCall(tag, address);
+        this->tokenizeSysCall(tag, address);
         address += 4;
       } else {
-        this->parseInstruction(symbols, address, _args);
+        this->tokenizeInstruction(symbols, address, _args);
         address += 4;
       }
 
@@ -250,14 +257,13 @@ auto Tokenizer::parse(const std::string& file) -> void {
       throw std::runtime_error("ERROR! Directive not found\n");
     }
   }
+  _file.close();
 
   for (auto& token : this->tokens) {  
     if (token.tokenType == Type::INSTRUCTION) {
       token.args = this->parseArgs(_args[token.address]);
     }
   }
-
-  _file.close();
 }
 
 auto Tokenizer::removeInlineComments(std::string& line) -> void {
@@ -268,16 +274,12 @@ auto Tokenizer::removeInlineComments(std::string& line) -> void {
   line.erase(line.find_last_not_of(" \t") + 1);
 }
 
-auto Tokenizer::isNumber(const char& c) -> bool {
-  return (0x30 <= c && c <= 0x39) || c == '-';
-}
-
 auto Tokenizer::parseArgs(const VecString& args) -> VecU64 {
   VecU64 parsedArgs;
   for (const auto& arg: args) {
     if (this->labelsToAddress.contains(arg)) {
       parsedArgs.push_back(this->labelsToAddress[arg]);
-    } else if (this->isNumber(arg.front())) {
+    } else if (std::isdigit(arg.front()) || arg.front() == '-') {
       parsedArgs.push_back(static_cast<u64>(std::stoi(arg)));
     } else {
       parsedArgs.push_back(this->parseRegister(arg.data()));

@@ -41,13 +41,13 @@ public:
   auto assemble(u8* program) -> void;
 
   // Self-explanatory
-  auto isRInstruction(const std::string& mnemonic) -> bool;
+  auto isRTypeInstruction(const std::string& mnemonic) -> bool;
 
   // Self-explanatory
-  auto isIInstruction(const std::string& mnemonic) -> bool;
+  auto isITypeInstruction(const std::string& mnemonic) -> bool;
 
   // Self-explanatory
-  auto isJInstruction(const std::string& mnemonic) -> bool;
+  auto isJTypeInstruction(const std::string& mnemonic) -> bool;
 
   // Self-explanatory
   auto isPseudoInstruction(const std::string& mnemonic) -> bool;

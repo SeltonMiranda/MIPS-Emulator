@@ -27,23 +27,23 @@ public:
   auto parseRegister(const char *arg) -> u64;
 
   // Parses the label 
-  auto parseLabel(std::string& symbol, u64 address) -> void;
+  auto tokenizeLabel(std::string& symbol, u64 address) -> void;
 
   // Parses the syscall
-  auto parseSysCall(std::string& symbol, u64 address) -> void;
+  auto tokenizeSysCall(std::string& symbol, u64 address) -> void;
 
   // Parses an Instruction
   // Parameter _args stores the address from a label (wether the instruction has any as argument)
-  auto parseInstruction(VecString& symbols, u64 address, std::unordered_map<u64, VecString>& _args) -> void;
+  auto tokenizeInstruction(VecString& symbols, u64 address, std::unordered_map<u64, VecString>& _args) -> void;
 
   // Parses the data section
-  auto parseDataSection(std::string& line, u64& address) -> void;
+  auto tokenizeDataSection(std::string& line, u64& address) -> void;
 
   // Self-explanatory
   auto removeInlineComments(std::string& line) -> void;
   
   // Self-explanatory
-  auto isNumber(const char& c) -> bool;
+  //auto isNumber(const char& c) -> bool;
 
   // Self-explanatory
   auto isSysCall(const std::string& call) -> bool;
@@ -58,7 +58,7 @@ public:
   auto validateArgumentsSize(const std::string& mnemonic, const VecString& args) -> bool;
 
   // Parses the asm file
-  auto parse(const std::string& file) -> void;
+  auto tokenize(const std::string& file) -> void;
 
   // Debug purposes
   auto printTokens() -> void;

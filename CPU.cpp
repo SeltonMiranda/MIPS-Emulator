@@ -82,7 +82,7 @@ auto CPU::readRegister(u32 index) -> u32 {
   return this->registers[index];
 }
 
-auto CPU::nextInstruction() -> void {
+auto CPU::fetchInstruction() -> void {
   auto value{this->readMemoryBlock(this->pc, 4)};
 
   u32 instruction{u32((value[0] <<  0)) | u32((value[1] <<  8)) |
@@ -90,7 +90,7 @@ auto CPU::nextInstruction() -> void {
   this->execute(instruction);
 }
 
-auto CPU::parseImm(u32 instruction) -> Instruction {
+auto CPU::decodeImm(u32 instruction) -> Instruction {
   Instruction i;
   i.opcode  =  (instruction >> 26) & 0x3F;
   i.rt      =  (instruction >> 16) & 0x1F;
@@ -99,7 +99,7 @@ auto CPU::parseImm(u32 instruction) -> Instruction {
   return i;
 }
 
-auto CPU::parseR(u32 instruction) -> Instruction {
+auto CPU::decodeR(u32 instruction) -> Instruction {
   Instruction i;
   i.rd = (instruction >> 11) & 0x1F;
   i.rt = (instruction >> 16) & 0x1F;
@@ -109,7 +109,7 @@ auto CPU::parseR(u32 instruction) -> Instruction {
   return i;
 }
 
-auto CPU::parseJ(u32 instruction) -> Instruction {
+auto CPU::decodeJ(u32 instruction) -> Instruction {
   Instruction i;
   i.opcode = (instruction >> 26) & 0x3F;
   i.address = (instruction & 0x3FFFFFF);
@@ -141,7 +141,6 @@ auto CPU::executeImm(Instruction i) -> void {
   u32 rsContent = this->readRegister(i.rs);
   u32 rtContent = this->readRegister(i.rt);
   u32 valueToWrite;
-  //s32 signedValue;
   u8 valueToStore[4];
   u8 byte;
 
@@ -366,7 +365,7 @@ auto CPU::execute(u32 instruction) -> void {
   Instruction i;
   switch (opcode) {
   case 0x00:
-    i = this->parseR(instruction);
+    i = this->decodeR(instruction);
     this->executeR(i);
     break;
 
@@ -382,13 +381,13 @@ auto CPU::execute(u32 instruction) -> void {
   case 0x24: // lb
   case 0x28: // sb
   case 0x2b: // sw
-    i = this->parseImm(instruction);
+    i = this->decodeImm(instruction);
     this->executeImm(i);
     break;
 
   case 0x02: // j
   case 0x03: // jal
-    i = this->parseJ(instruction);
+    i = this->decodeJ(instruction);
     this->executeJ(i);
     break;
 
